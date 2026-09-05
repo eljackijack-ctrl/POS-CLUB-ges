@@ -1,0 +1,58 @@
+{
+  "name": "ClubPOS FCFA - Caisse & Bar Nightclub",
+  "short_name": "ClubPOS",
+  "description": "Application POS Mobile et Gestion de Salle Hors-ligne pour Boîte de Nuit : Commandes, Bar KDS, Factures ESC/POS FCFA, Stocks et Clôture Z.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#090b12",
+  "theme_color": "#090b12",
+  "orientation": "any",
+  "categories": ["business", "productivity", "utilities", "finance"],
+  "icons": [
+    {
+      "src": "/clubpos-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Plan des Tables",
+      "short_name": "Tables",
+      "description": "Accéder directement au plan de salle et carrés VIP",
+      "url": "/?tab=TABLES"
+    },
+    {
+      "name": "Écran Barman (KDS)",
+      "short_name": "Barman",
+      "description": "Voir les commandes de boissons à préparer",
+      "url": "/?tab=KDS_BAR"
+    },
+    {
+      "name": "Prise de Commande",
+      "short_name": "Commander",
+      "description": "Créer une nouvelle commande de table",
+      "url": "/?tab=ORDER"
+    },
+    {
+      "name": "Rapport Z & Clôture",
+      "short_name": "Rapport Z",
+      "description": "Consulter les recettes et clôturer la soirée",
+      "url": "/?tab=REPORTS"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "ClubPOS FCFA - Caisse & Bar Nightclub",
+  "description": "Application 100% web sans téléchargement d'APK pour boîte de nuit et bar lounge : lien de suivi des ventes en direct pour le directeur sur smartphone/ordinateur avec QR code et WhatsApp, détection de code MAC / IP avec remise à 0 automatique lors d'un changement d'appareil, fonctionnement instantané dans tout navigateur web, mode hors-ligne sans Internet, impression tickets thermiques Bluetooth ESC/POS, KDS barman, tables VIP, encaissement FCFA et rapports Z.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

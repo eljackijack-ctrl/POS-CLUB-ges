@@ -1,0 +1,19 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Enterprise root registry & metadata
+    match /enterprises/{enterpriseId} {
+      allow read, write: if true;
+
+      // Scoped collections for each isolated enterprise (products, orders, payments, users, tables, movements, backups, closings, logs)
+      match /{collectionName}/{docId=**} {
+        allow read, write: if true;
+      }
+    }
+
+    // Root legacy collections for backward compatibility with un-scoped stations
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

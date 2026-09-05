@@ -1,0 +1,127 @@
+{
+  "entities": {
+    "Product": {
+      "fields": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "categoryName": { "type": "string" },
+        "priceFCFA": { "type": "number" },
+        "costPriceFCFA": { "type": "number" },
+        "format": { "type": "string" },
+        "volumeCl": { "type": "number" },
+        "currentStock": { "type": "number" },
+        "minStockThreshold": { "type": "number" },
+        "isAlcoholic": { "type": "boolean" },
+        "badge": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "Table": {
+      "fields": {
+        "id": { "type": "string" },
+        "number": { "type": "string" },
+        "zone": { "type": "string" },
+        "status": { "type": "string" },
+        "capacity": { "type": "number" },
+        "activeOrderId": { "type": "string" }
+      }
+    },
+    "Order": {
+      "fields": {
+        "id": { "type": "string" },
+        "tableId": { "type": "string" },
+        "tableNumber": { "type": "string" },
+        "serverName": { "type": "string" },
+        "items": { "type": "array" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "totalAmountFCFA": { "type": "number" }
+      }
+    },
+    "Payment": {
+      "fields": {
+        "id": { "type": "string" },
+        "orderId": { "type": "string" },
+        "tableId": { "type": "string" },
+        "tableNumber": { "type": "string" },
+        "serverName": { "type": "string" },
+        "cashierName": { "type": "string" },
+        "subtotalFCFA": { "type": "number" },
+        "discountFCFA": { "type": "number" },
+        "finalTotalFCFA": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "items": { "type": "array" },
+        "timestamp": { "type": "string" },
+        "status": { "type": "string" }
+      }
+    },
+    "StockMovement": {
+      "fields": {
+        "id": { "type": "string" },
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "type": { "type": "string" },
+        "quantityChange": { "type": "number" },
+        "authorName": { "type": "string" },
+        "reason": { "type": "string" },
+        "timestamp": { "type": "string" }
+      }
+    },
+    "CompanyProfile": {
+      "fields": {
+        "name": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "nif": { "type": "string" },
+        "rccm": { "type": "string" },
+        "currency": { "type": "string" },
+        "receiptHeader": { "type": "string" },
+        "receiptFooter": { "type": "string" }
+      }
+    },
+    "PrinterConfig": {
+      "fields": {
+        "paperWidth": { "type": "number" },
+        "autoPrintOnPayment": { "type": "boolean" },
+        "printDoubleTicket": { "type": "boolean" },
+        "printBarVoucher": { "type": "boolean" },
+        "showTaxBreakdown": { "type": "boolean" },
+        "showQRCode": { "type": "boolean" },
+        "fontSize": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "products/{productId}": {
+      "schema": "Product",
+      "description": "Products and beverage stock catalog"
+    },
+    "tables/{tableId}": {
+      "schema": "Table",
+      "description": "Club tables and VIP lounges"
+    },
+    "orders/{orderId}": {
+      "schema": "Order",
+      "description": "Active and past orders"
+    },
+    "payments/{paymentId}": {
+      "schema": "Payment",
+      "description": "Sales payments and transaction receipts"
+    },
+    "stockMovements/{movementId}": {
+      "schema": "StockMovement",
+      "description": "Stock movements, refills and adjustments"
+    },
+    "settings/companyProfile": {
+      "schema": "CompanyProfile",
+      "description": "Establishment profile and billing settings"
+    },
+    "settings/printerConfig": {
+      "schema": "PrinterConfig",
+      "description": "Thermal printer configuration"
+    }
+  }
+}

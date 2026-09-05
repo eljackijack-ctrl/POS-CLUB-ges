@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="50%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#151928" />
+      <stop offset="100%" stop-color="#090b12" />
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="44" fill="url(#bgGrad)" stroke="#f59e0b" stroke-width="4" />
+  <g transform="translate(40, 36)">
+    <!-- Wine glass / Cocktails Nightclub icon -->
+    <path d="M12 28a44 44 0 0 0 88 0V8H12v20z" fill="none" stroke="url(#goldGrad)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M56 72v40M32 112h48" fill="none" stroke="url(#goldGrad)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="56" cy="36" r="14" fill="#f59e0b" fill-opacity="0.8" />
+    <path d="M84 16l8-8M96 24l8-4" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" />
+  </g>
+  <text x="96" y="172" fill="#fbbf24" font-size="20" font-family="system-ui, -apple-system, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="2">CLUB POS</text>
+</svg>
