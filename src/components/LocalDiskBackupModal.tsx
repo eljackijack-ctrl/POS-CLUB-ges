@@ -3,7 +3,7 @@ import {
   Folder, FolderCheck, HardDrive, FileJson, Download, Upload, 
   Clock, ShieldCheck, Check, AlertCircle, Trash2, RefreshCw, 
   Settings, X, Sparkles, Database, Save, ArrowDownToLine,
-  CheckCircle2, Laptop
+  CheckCircle2, Laptop, RotateCcw
 } from 'lucide-react';
 import { usePOS } from '../context/POSContext';
 import { DiskBackupFileInfo } from '../types';
@@ -23,6 +23,7 @@ export const LocalDiskBackupModal: React.FC<LocalDiskBackupModalProps> = ({ isOp
     refreshDiskBackupFiles,
     pickCustomDiskFolder,
     restoreFromDiskBackup,
+    restoreLatestDiskBackupNow,
     deleteDiskBackupFile,
     downloadDiskBackupFile,
     importBackupJSON,
@@ -105,6 +106,22 @@ export const LocalDiskBackupModal: React.FC<LocalDiskBackupModalProps> = ({ isOp
       }
     } catch (err: any) {
       showNotification(err.message || 'Erreur de restauration', true);
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
+  const handleOpenLatestBackup = async () => {
+    setIsRestoring(true);
+    try {
+      const res = await restoreLatestDiskBackupNow();
+      if (res.success) {
+        showNotification(res.message);
+      } else {
+        showNotification(res.message, true);
+      }
+    } catch (err: any) {
+      showNotification(err?.message || "Erreur lors de l'ouverture du dernier fichier", true);
     } finally {
       setIsRestoring(false);
     }
@@ -247,6 +264,18 @@ export const LocalDiskBackupModal: React.FC<LocalDiskBackupModalProps> = ({ isOp
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+            {diskBackupFiles.length > 0 && (
+              <button
+                id="btn-open-latest-disk-backup-top"
+                disabled={isRestoring || isDiskBackupRunning}
+                onClick={handleOpenLatestBackup}
+                className="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center justify-center gap-1.5 border border-emerald-500/40 transition-colors cursor-pointer disabled:opacity-50"
+                title="Ouvrir et charger le dernier fichier .JSON sauvegardé"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>{isRestoring ? 'Ouverture...' : 'Ouvrir Dernier Fichier'}</span>
+              </button>
+            )}
             <button
               id="btn-pick-custom-disk-folder"
               onClick={handlePickDirectory}
@@ -342,6 +371,49 @@ export const LocalDiskBackupModal: React.FC<LocalDiskBackupModalProps> = ({ isOp
                   <span>Actualiser la liste</span>
                 </button>
               </div>
+
+              {/* Highlighted Banner for the Latest Backup File */}
+              {diskBackupFiles.length > 0 && (
+                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-cyan-950/30 to-blue-950/20 border border-emerald-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg shadow-emerald-950/20">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center justify-center shrink-0 mt-0.5">
+                      <Sparkles className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-white">Dernier Fichier .JSON Sauvegardé</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                          Plus récent
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-300 font-mono mt-0.5 break-all">
+                        {diskBackupFiles[0].fileName}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-400 mt-1">
+                        <span>{formatDateTime(diskBackupFiles[0].savedAt)}</span>
+                        <span>•</span>
+                        <span>{diskBackupFiles[0].formattedSize}</span>
+                        <span>•</span>
+                        <span>{diskBackupFiles[0].ordersCount} commande(s)</span>
+                        <span>•</span>
+                        <span className="text-emerald-400 font-semibold">{formatFCFA(diskBackupFiles[0].totalRevenueFCFA)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      id="btn-open-latest-file-card"
+                      disabled={isRestoring}
+                      onClick={handleOpenLatestBackup}
+                      className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>{isRestoring ? 'Ouverture...' : 'Ouvrir Ce Fichier Maintenant'}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Files Table / Empty state */}
               {filteredFiles.length === 0 ? (
@@ -541,6 +613,35 @@ export const LocalDiskBackupModal: React.FC<LocalDiskBackupModalProps> = ({ isOp
                       Sauvegarde de sécurité automatique obligatoire avant toute <strong>Remise à Zéro des Ventes</strong>
                     </span>
                   </label>
+
+                  {/* Auto-restore on startup checkbox */}
+                  <div className="pt-3 border-t border-white/10">
+                    <div className="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-500/30 space-y-2">
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <input
+                          id="toggle-auto-restore-on-startup"
+                          type="checkbox"
+                          checked={diskBackupConfig.autoRestoreOnStartup !== false}
+                          onChange={(e) => updateDiskBackupConfig({ autoRestoreOnStartup: e.target.checked })}
+                          className="w-4 h-4 accent-emerald-500 rounded mt-0.5 cursor-pointer"
+                        />
+                        <div className="space-y-0.5">
+                          <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                            Ouverture automatique du dernier fichier .JSON à la réouverture de l’application
+                          </span>
+                          <p className="text-[11px] text-gray-300 leading-relaxed">
+                            (Activé par défaut) Au lancement ou rafraîchissement de l'application, le système charge et restaure automatiquement le fichier .JSON le plus récent sauvegardé sur le disque local pour reprendre instantanément votre session sans aucune manipulation manuelle.
+                          </p>
+                          {diskBackupConfig.lastAutoRestoredFileName && (
+                            <p className="text-[10px] text-emerald-300/80 pt-1 font-mono">
+                              Dernier fichier restauré automatiquement : {diskBackupConfig.lastAutoRestoredFileName} {diskBackupConfig.lastAutoRestoredAt ? `(${formatDateTime(diskBackupConfig.lastAutoRestoredAt)})` : ''}
+                            </p>
+                          )}
+                        </div>
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </div>
 

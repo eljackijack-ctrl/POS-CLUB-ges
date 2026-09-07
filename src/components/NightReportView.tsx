@@ -59,7 +59,8 @@ export const NightReportView: React.FC<NightReportViewProps> = ({
     diskBackupConfig,
     diskBackupFiles,
     saveBackupToDiskNow,
-    isDiskBackupRunning
+    isDiskBackupRunning,
+    restoreLatestDiskBackupNow
   } = usePOS();
 
   const [activeSubTab, setActiveSubTab] = useState<ReportTab>('DAILY');
@@ -1052,7 +1053,19 @@ export const NightReportView: React.FC<NightReportViewProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                  {diskBackupFiles.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => restoreLatestDiskBackupNow()}
+                      className="px-3 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                      title="Ouvrir le dernier fichier .JSON sauvegardé"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      <span>Ouvrir Dernier .JSON</span>
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => saveBackupToDiskNow('Sauvegarde manuelle depuis l\'onglet Rapports', 'MANUAL')}
@@ -1075,11 +1088,17 @@ export const NightReportView: React.FC<NightReportViewProps> = ({
               </div>
 
               {/* Status summary tags */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px]">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1 text-[11px]">
                 <div className="bg-[#090d17] p-2 rounded-xl border border-white/5">
                   <span className="text-gray-400 block text-[10px]">Fréquence auto</span>
                   <span className="font-bold text-cyan-300">
-                    {diskBackupConfig.intervalMinutes === 1 ? 'À chaque minute (1 min)' : `Toutes les ${diskBackupConfig.intervalMinutes} min`}
+                    {diskBackupConfig.intervalMinutes === 1 ? 'À chaque minute' : `Toutes les ${diskBackupConfig.intervalMinutes} min`}
+                  </span>
+                </div>
+                <div className="bg-[#090d17] p-2 rounded-xl border border-white/5">
+                  <span className="text-gray-400 block text-[10px]">À la réouverture</span>
+                  <span className="font-bold text-emerald-300">
+                    {diskBackupConfig.autoRestoreOnStartup !== false ? 'Ouverture auto (Oui)' : 'Manuel'}
                   </span>
                 </div>
                 <div className="bg-[#090d17] p-2 rounded-xl border border-white/5">
@@ -1092,7 +1111,7 @@ export const NightReportView: React.FC<NightReportViewProps> = ({
                 </div>
                 <div className="bg-[#090d17] p-2 rounded-xl border border-white/5">
                   <span className="text-gray-400 block text-[10px]">Fichiers sur le disque</span>
-                  <span className="font-bold text-cyan-300 font-mono">{diskBackupFiles.length} fichier(s) .json</span>
+                  <span className="font-bold text-cyan-300 font-mono">{diskBackupFiles.length} fichier(s)</span>
                 </div>
               </div>
             </div>

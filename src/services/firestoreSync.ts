@@ -578,6 +578,14 @@ class FirestoreSyncService {
     }
   }
 
+  public async deleteTable(tableId: string) {
+    try {
+      await deleteDoc(this.getDocRef('tables', tableId));
+    } catch (e) {
+      console.warn('[Firestore] Delete table failed:', e);
+    }
+  }
+
   public async saveOrder(order: Order) {
     await this.recordAndSync(
       'ORDER',
@@ -587,6 +595,23 @@ class FirestoreSyncService {
       order,
       order.totalAmountFCFA
     );
+  }
+
+  public async saveOrdersBatch(orders: Order[]) {
+    try {
+      // Chunk into batches of 400
+      for (let i = 0; i < orders.length; i += 400) {
+        const chunk = orders.slice(i, i + 400);
+        const batch = writeBatch(db);
+        chunk.forEach(o => {
+          const ref = this.getDocRef('orders', o.id);
+          batch.set(ref, o);
+        });
+        await batch.commit();
+      }
+    } catch (e) {
+      console.warn('[Firestore] Save orders batch failed:', e);
+    }
   }
 
   public async deleteOrder(orderId: string) {
@@ -606,6 +631,107 @@ class FirestoreSyncService {
       payment,
       payment.totalPaidFCFA
     );
+  }
+
+  public async savePaymentsBatch(payments: Payment[]) {
+    try {
+      for (let i = 0; i < payments.length; i += 400) {
+        const chunk = payments.slice(i, i + 400);
+        const batch = writeBatch(db);
+        chunk.forEach(p => {
+          const ref = this.getDocRef('payments', p.id);
+          batch.set(ref, p);
+        });
+        await batch.commit();
+      }
+    } catch (e) {
+      console.warn('[Firestore] Save payments batch failed:', e);
+    }
+  }
+
+  public async saveStockMovementsBatch(movements: StockMovement[]) {
+    try {
+      for (let i = 0; i < movements.length; i += 400) {
+        const chunk = movements.slice(i, i + 400);
+        const batch = writeBatch(db);
+        chunk.forEach(m => {
+          const ref = this.getDocRef('stockMovements', m.id);
+          batch.set(ref, m);
+        });
+        await batch.commit();
+      }
+    } catch (e) {
+      console.warn('[Firestore] Save stock movements batch failed:', e);
+    }
+  }
+
+  public async syncAllDataToCloud(data: {
+    profile: CompanyProfile;
+    products: Product[];
+    tables: Table[];
+    orders: Order[];
+    payments: Payment[];
+    movements: StockMovement[];
+    users: User[];
+  }): Promise<{ success: boolean; syncedCount: number; error?: string }> {
+    try {
+      this.setStatus('SYNCING');
+      let count = 0;
+
+      // 1. Company Profile
+      if (data.profile) {
+        await this.saveCompanyProfile(data.profile);
+        count++;
+      }
+
+      // 2. Products
+      if (data.products && data.products.length > 0) {
+        await this.saveProductsBatch(data.products);
+        count += data.products.length;
+      }
+
+      // 3. Tables
+      if (data.tables && data.tables.length > 0) {
+        await this.saveTablesBatch(data.tables);
+        count += data.tables.length;
+      }
+
+      // 4. Orders
+      if (data.orders && data.orders.length > 0) {
+        await this.saveOrdersBatch(data.orders);
+        count += data.orders.length;
+      }
+
+      // 5. Payments
+      if (data.payments && data.payments.length > 0) {
+        await this.savePaymentsBatch(data.payments);
+        count += data.payments.length;
+      }
+
+      // 6. Stock Movements
+      if (data.movements && data.movements.length > 0) {
+        await this.saveStockMovementsBatch(data.movements);
+        count += data.movements.length;
+      }
+
+      // 7. Users
+      if (data.users && data.users.length > 0) {
+        for (const u of data.users) {
+          await this.saveUser(u);
+          count++;
+        }
+      }
+
+      // Process any remaining pending queue
+      await this.processPendingQueue();
+
+      this.setStatus('CONNECTED');
+      return { success: true, syncedCount: count };
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      this.setStatus('CONNECTED');
+      return { success: false, syncedCount: 0, error: errorMsg };
+    }
   }
 
   public async clearSalesAndOrdersFromCloud(): Promise<void> {

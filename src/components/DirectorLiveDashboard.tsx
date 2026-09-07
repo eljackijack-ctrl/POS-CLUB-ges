@@ -7,7 +7,7 @@ import {
   Layers, BarChart3, PieChart, ShoppingBag, Eye, EyeOff, LogOut,
   ExternalLink, Printer, Search, Calendar, Zap, SmartphoneNfc,
   Package, Check, ArrowDownRight, RotateCcw, AlertCircle,
-  KeyRound, Lock, Unlock, Key, Delete
+  KeyRound, Lock, Unlock, Key, Delete, FileText, Phone, Mail, MapPin, Crown
 } from 'lucide-react';
 import { usePOS } from '../context/POSContext';
 import { Payment, Product, PaymentMethod } from '../types';
@@ -18,6 +18,7 @@ import { ShareDirectorModal } from './ShareDirectorModal';
 import { ResetSalesHistoryModal } from './ResetSalesHistoryModal';
 import { ThermalReceiptModal } from './ThermalReceiptModal';
 import { ChangeDirectorPasswordModal } from './ChangeDirectorPasswordModal';
+import { SlidingOptionsRow } from './SlidingOptionsRow';
 
 interface PaymentMethodInfo {
   label: string;
@@ -43,12 +44,43 @@ export const DirectorLiveDashboard: React.FC<DirectorLiveDashboardProps> = ({
     getDirectorUser,
     payments, 
     products, 
+    orders,
+    tables,
+    stockMovements,
     categories,
     companyProfile, 
     shiftStartTime,
     getDailyReport,
-    soundManager
+    soundManager,
+    syncAllDataToCloud,
+    cloudSyncStatus,
+    pendingSyncCount
   } = usePOS();
+
+  const [isSyncingData, setIsSyncingData] = useState<boolean>(false);
+  const [syncNotice, setSyncNotice] = useState<string | null>(null);
+
+  const handleForceSync = async () => {
+    if (isSyncingData) return;
+    setIsSyncingData(true);
+    setSyncNotice(null);
+    try {
+      const res = await syncAllDataToCloud();
+      if (res.success) {
+        setSyncNotice(`Toutes les données sont synchronisées (${res.syncedCount} éléments)`);
+        soundManager?.playSuccessTone();
+        setTimeout(() => setSyncNotice(null), 5000);
+      } else {
+        setSyncNotice(`Erreur de synchronisation : ${res.error || 'Vérifiez la connexion réseau'}`);
+        setTimeout(() => setSyncNotice(null), 6000);
+      }
+    } catch {
+      setSyncNotice('Erreur lors de la synchronisation.');
+      setTimeout(() => setSyncNotice(null), 5000);
+    } finally {
+      setIsSyncingData(false);
+    }
+  };
 
   // Authentication Lock state: If user is ADMIN, already unlocked; otherwise check URL or lock
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
@@ -273,119 +305,208 @@ export const DirectorLiveDashboard: React.FC<DirectorLiveDashboardProps> = ({
   return (
     <div className="min-h-screen bg-[#070911] text-gray-100 flex flex-col font-sans pb-16">
       
-      {/* Top Directrice / Director Executive Header */}
-      <header className="sticky top-0 z-40 bg-[#0d101c]/95 backdrop-blur-md border-b border-amber-500/30 px-4 sm:px-6 py-3.5 shadow-xl shadow-black/60">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5">
+      {/* Top Directrice / Director Executive Header with Full Company Profile */}
+      <header className="sticky top-0 z-40 bg-[#0d101c]/95 backdrop-blur-md border-b border-amber-500/30 px-4 sm:px-6 py-3 shadow-xl shadow-black/60">
+        <div className="max-w-7xl mx-auto space-y-2.5">
           
-          {/* Brand & Live Pulse */}
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-500 p-0.5 shadow-lg shadow-amber-500/20 shrink-0">
-              <div className="w-full h-full bg-[#0d101c] rounded-[14px] flex items-center justify-center">
-                <Radio className="w-6 h-6 text-amber-400 animate-pulse" />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                  Vue Directrice en Direct
-                </span>
-                
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 shadow-sm">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                  <span>SYNCHRO CLOUD LIVE</span>
-                </span>
-
-                <span className="text-xs font-mono font-bold text-gray-400">
-                  {currentTime}
-                </span>
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3.5">
+            {/* Brand & Company Identity */}
+            <div className="flex items-start gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-500 p-0.5 shadow-lg shadow-amber-500/20 shrink-0 mt-0.5">
+                <div className="w-full h-full bg-[#0d101c] rounded-[14px] flex items-center justify-center overflow-hidden">
+                  {companyProfile.logo ? (
+                    <img
+                      src={companyProfile.logo}
+                      alt={companyProfile.name}
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  ) : (
+                    <Radio className="w-6 h-6 text-amber-400 animate-pulse" />
+                  )}
+                </div>
               </div>
 
-              <h1 className="text-base sm:text-lg font-black text-white flex items-center gap-2 mt-0.5">
-                <span>{companyProfile.name || 'Club VIP & Lounge'}</span>
-                {companyProfile.city && (
-                  <span className="text-xs text-gray-400 font-normal">({companyProfile.city})</span>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    Suivi & Live Directeur
+                  </span>
+                  
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 shadow-sm">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    <span>SYNCHRO CLOUD EN DIRECT</span>
+                  </span>
+
+                  <span className="text-xs font-mono font-bold text-gray-400">
+                    {currentTime}
+                  </span>
+                </div>
+
+                <h1 className="text-base sm:text-xl font-black text-white flex items-center gap-2 mt-0.5 tracking-tight uppercase">
+                  <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500 bg-clip-text text-transparent">
+                    {companyProfile.name || 'Club VIP & Lounge'}
+                  </span>
+                  <span className="text-xs px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono font-bold">
+                    {companyProfile.currency || 'FCFA'}
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono">
+                    CODE: {companyProfile.enterpriseCode || 'CLUBPOS'}
+                  </span>
+                </h1>
+
+                {companyProfile.slogan && (
+                  <p className="text-xs text-gray-300 italic truncate max-w-xl">
+                    « {companyProfile.slogan} »
+                  </p>
                 )}
-              </h1>
+
+                {/* Legal, Fiscal & Location Row */}
+                <div className="flex items-center gap-x-4 gap-y-1 flex-wrap mt-1 text-[11px] text-gray-300">
+                  {companyProfile.rccm && (
+                    <div className="flex items-center gap-1">
+                      <FileText className="w-3 h-3 text-amber-400" />
+                      <span className="font-semibold text-gray-400">RCCM:</span>
+                      <span className="font-mono text-white">{companyProfile.rccm}</span>
+                    </div>
+                  )}
+                  {companyProfile.nif && (
+                    <div className="flex items-center gap-1">
+                      <FileText className="w-3 h-3 text-amber-400" />
+                      <span className="font-semibold text-gray-400">NIF:</span>
+                      <span className="font-mono text-white">{companyProfile.nif}</span>
+                    </div>
+                  )}
+                  {companyProfile.phone && (
+                    <div className="flex items-center gap-1">
+                      <Phone className="w-3 h-3 text-emerald-400" />
+                      <span className="font-mono text-white">{companyProfile.phone}</span>
+                    </div>
+                  )}
+                  {(companyProfile.address || companyProfile.cityCountry) && (
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-rose-400" />
+                      <span className="text-gray-300 truncate max-w-[260px]">
+                        {[companyProfile.address, companyProfile.cityCountry].filter(Boolean).join(', ')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Action Buttons & Quick Tools */}
-          <div className="flex items-center gap-2 flex-wrap w-full md:w-auto justify-end">
-            
-            {/* Live Sound Alert Toggle */}
-            <button
-              type="button"
-              onClick={() => setLiveSound(!liveSound)}
-              title={liveSound ? 'Son des encaissements activé' : 'Son coupé'}
-              className={`p-2 rounded-xl border text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
-                liveSound 
-                  ? 'bg-amber-500/20 border-amber-500/40 text-amber-300' 
-                  : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
-              }`}
-            >
-              {liveSound ? <Bell className="w-4 h-4 text-amber-400" /> : <BellOff className="w-4 h-4 text-gray-400" />}
-              <span className="hidden sm:inline">Bip Vente</span>
-            </button>
-
-            {/* Change Director Password Button */}
-            <button
-              type="button"
-              id="btn-director-change-password-top"
-              onClick={() => setIsChangePasswordModalOpen(true)}
-              className="px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 hover:text-white font-bold text-xs shadow-sm flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
-              title="Modifier le mot de passe confidentiel / code PIN Direction"
-            >
-              <KeyRound className="w-4 h-4 text-amber-400" />
-              <span>Mot de Passe</span>
-            </button>
-
-            {/* Share Director Link Button */}
-            <button
-              type="button"
-              id="btn-share-director-top"
-              onClick={() => setIsShareModalOpen(true)}
-              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-400 hover:to-rose-400 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
-            >
-              <Share2 className="w-4 h-4" />
-              <span>Partager le Lien Directrice</span>
-            </button>
-
-            {/* Export PDF Button */}
-            <button
-              type="button"
-              onClick={handleExportPDF}
-              className="px-3 py-2 rounded-xl bg-[#151a2d] border border-white/15 hover:border-white/30 text-gray-200 hover:text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
-            >
-              <Download className="w-4 h-4 text-amber-400" />
-              <span className="hidden sm:inline">Rapport Z (PDF)</span>
-            </button>
-
-            {/* Reset Sales Button (Director Exclusive) */}
-            <button
-              type="button"
-              id="btn-director-reset-sales"
-              onClick={() => setIsResetModalOpen(true)}
-              className="px-3 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-rose-300 hover:text-rose-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
-              title="Réinitialiser l'historique des ventes et des transactions (0 FCFA)"
-            >
-              <RotateCcw className="w-4 h-4 text-rose-400" />
-              <span>Réinitialiser Ventes</span>
-            </button>
-
-            {/* Back to POS Button (if embedded) */}
-            {onBackToPOS && (
+            {/* Action Buttons & Quick Tools */}
+            <div className="flex items-center gap-2 flex-wrap w-full lg:w-auto justify-end pt-2 lg:pt-0 border-t lg:border-t-0 border-white/10">
+              
+              {/* Force Cloud Sync Button */}
               <button
                 type="button"
-                onClick={onBackToPOS}
-                className="px-3 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+                id="btn-director-force-sync"
+                onClick={handleForceSync}
+                disabled={isSyncingData}
+                title="Synchroniser immédiatement toutes les données de caisse, stocks, commandes et ventes avec le cloud"
+                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-md ${
+                  isSyncingData 
+                    ? 'bg-amber-500/30 text-amber-200 border border-amber-500/50 cursor-wait' 
+                    : 'bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-200 hover:text-white'
+                }`}
               >
-                <LogOut className="w-4 h-4" />
-                <span>Retour Caisse</span>
+                <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${isSyncingData ? 'animate-spin' : ''}`} />
+                <span>{isSyncingData ? 'Synchronisation...' : 'Synchroniser Tout en Direct'}</span>
               </button>
-            )}
 
+              {/* Live Sound Alert Toggle */}
+              <button
+                type="button"
+                onClick={() => setLiveSound(!liveSound)}
+                title={liveSound ? 'Son des encaissements activé' : 'Son coupé'}
+                className={`p-2 rounded-xl border text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  liveSound 
+                    ? 'bg-amber-500/20 border-amber-500/40 text-amber-300' 
+                    : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                }`}
+              >
+                {liveSound ? <Bell className="w-4 h-4 text-amber-400" /> : <BellOff className="w-4 h-4 text-gray-400" />}
+                <span className="hidden sm:inline">Bip Vente</span>
+              </button>
+
+              {/* Change Director Password Button */}
+              <button
+                type="button"
+                id="btn-director-change-password-top"
+                onClick={() => setIsChangePasswordModalOpen(true)}
+                className="px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 hover:text-white font-bold text-xs shadow-sm flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                title="Modifier le mot de passe confidentiel / code PIN Direction"
+              >
+                <KeyRound className="w-4 h-4 text-amber-400" />
+                <span>Mot de Passe</span>
+              </button>
+
+              {/* Share Director Link Button */}
+              <button
+                type="button"
+                id="btn-share-director-top"
+                onClick={() => setIsShareModalOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-400 hover:to-rose-400 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>Partager le Lien Directrice</span>
+              </button>
+
+              {/* Export PDF Button */}
+              <button
+                type="button"
+                onClick={handleExportPDF}
+                className="px-3 py-2 rounded-xl bg-[#151a2d] border border-white/15 hover:border-white/30 text-gray-200 hover:text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+              >
+                <Download className="w-4 h-4 text-amber-400" />
+                <span className="hidden sm:inline">Rapport Z (PDF)</span>
+              </button>
+
+              {/* Reset Sales Button (Director Exclusive) */}
+              <button
+                type="button"
+                id="btn-director-reset-sales"
+                onClick={() => setIsResetModalOpen(true)}
+                className="px-3 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-rose-300 hover:text-rose-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+                title="Réinitialiser l'historique des ventes et des transactions (0 FCFA)"
+              >
+                <RotateCcw className="w-4 h-4 text-rose-400" />
+                <span>Réinitialiser Ventes</span>
+              </button>
+
+              {/* Back to POS Button (if embedded) */}
+              {onBackToPOS && (
+                <button
+                  type="button"
+                  onClick={onBackToPOS}
+                  className="px-3 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Retour Caisse</span>
+                </button>
+              )}
+
+            </div>
           </div>
+
+          {/* Real-time Sync Confirmation Notice */}
+          {syncNotice && (
+            <div className="py-1 px-3 rounded-lg bg-emerald-950/80 border border-emerald-500/40 text-emerald-200 text-xs flex items-center justify-between animate-fadeIn">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{syncNotice}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSyncNotice(null)}
+                className="text-gray-400 hover:text-white text-xs cursor-pointer ml-2"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
         </div>
       </header>
@@ -562,85 +683,111 @@ export const DirectorLiveDashboard: React.FC<DirectorLiveDashboardProps> = ({
         {activeTab === 'SALES_HISTORY' && (
           <div className="space-y-6">
             
-            {/* Timeframe Filter Bar */}
+            {/* Timeframe Sliding Options Row */}
             <div className="flex items-center justify-between gap-3 flex-wrap bg-[#101424] p-2 sm:p-2.5 rounded-2xl border border-white/10">
-              <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
-                <span className="text-xs font-bold text-gray-400 px-2 flex items-center gap-1 shrink-0">
-                  <Filter className="w-3.5 h-3.5 text-amber-400" />
-                  Période :
-                </span>
-
-                <button
-                  type="button"
-                  onClick={() => setTimeFilter('SHIFT')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                    timeFilter === 'SHIFT'
-                      ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black'
-                      : 'bg-white/5 hover:bg-white/10 text-gray-300'
-                  }`}
+              <div className="flex-1 min-w-0 max-w-full">
+                <SlidingOptionsRow
+                  activeItemId={timeFilter}
+                  scrollStep={220}
+                  showArrows={true}
+                  showGradients={true}
+                  className="gap-1.5 py-0.5"
                 >
-                  Service en cours
-                </button>
+                  <span className="text-xs font-bold text-gray-400 px-2 flex items-center gap-1 shrink-0 whitespace-nowrap">
+                    <Filter className="w-3.5 h-3.5 text-amber-400" />
+                    Période :
+                  </span>
 
-                <button
-                  type="button"
-                  onClick={() => setTimeFilter('TODAY')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                    timeFilter === 'TODAY'
-                      ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black'
-                      : 'bg-white/5 hover:bg-white/10 text-gray-300'
-                  }`}
-                >
-                  Aujourd'hui
-                </button>
+                  <button
+                    type="button"
+                    id="timefilter-shift"
+                    data-id="SHIFT"
+                    data-active={timeFilter === 'SHIFT'}
+                    onClick={() => setTimeFilter('SHIFT')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
+                      timeFilter === 'SHIFT'
+                        ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black scale-[1.02]'
+                        : 'bg-white/5 hover:bg-white/10 text-gray-300'
+                    }`}
+                  >
+                    Service en cours
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setTimeFilter('YESTERDAY')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                    timeFilter === 'YESTERDAY'
-                      ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black'
-                      : 'bg-white/5 hover:bg-white/10 text-gray-300'
-                  }`}
-                >
-                  Hier
-                </button>
+                  <button
+                    type="button"
+                    id="timefilter-today"
+                    data-id="TODAY"
+                    data-active={timeFilter === 'TODAY'}
+                    onClick={() => setTimeFilter('TODAY')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
+                      timeFilter === 'TODAY'
+                        ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black scale-[1.02]'
+                        : 'bg-white/5 hover:bg-white/10 text-gray-300'
+                    }`}
+                  >
+                    Aujourd'hui
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setTimeFilter('WEEK')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                    timeFilter === 'WEEK'
-                      ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black'
-                      : 'bg-white/5 hover:bg-white/10 text-gray-300'
-                  }`}
-                >
-                  7 Jours
-                </button>
+                  <button
+                    type="button"
+                    id="timefilter-yesterday"
+                    data-id="YESTERDAY"
+                    data-active={timeFilter === 'YESTERDAY'}
+                    onClick={() => setTimeFilter('YESTERDAY')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
+                      timeFilter === 'YESTERDAY'
+                        ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black scale-[1.02]'
+                        : 'bg-white/5 hover:bg-white/10 text-gray-300'
+                    }`}
+                  >
+                    Hier
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setTimeFilter('MONTH')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                    timeFilter === 'MONTH'
-                      ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black'
-                      : 'bg-white/5 hover:bg-white/10 text-gray-300'
-                  }`}
-                >
-                  Mois
-                </button>
+                  <button
+                    type="button"
+                    id="timefilter-week"
+                    data-id="WEEK"
+                    data-active={timeFilter === 'WEEK'}
+                    onClick={() => setTimeFilter('WEEK')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
+                      timeFilter === 'WEEK'
+                        ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black scale-[1.02]'
+                        : 'bg-white/5 hover:bg-white/10 text-gray-300'
+                    }`}
+                  >
+                    7 Jours
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setTimeFilter('ALL')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                    timeFilter === 'ALL'
-                      ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black'
-                      : 'bg-white/5 hover:bg-white/10 text-gray-300'
-                  }`}
-                >
-                  Tout
-                </button>
+                  <button
+                    type="button"
+                    id="timefilter-month"
+                    data-id="MONTH"
+                    data-active={timeFilter === 'MONTH'}
+                    onClick={() => setTimeFilter('MONTH')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
+                      timeFilter === 'MONTH'
+                        ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black scale-[1.02]'
+                        : 'bg-white/5 hover:bg-white/10 text-gray-300'
+                    }`}
+                  >
+                    Mois
+                  </button>
+
+                  <button
+                    type="button"
+                    id="timefilter-all"
+                    data-id="ALL"
+                    data-active={timeFilter === 'ALL'}
+                    onClick={() => setTimeFilter('ALL')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
+                      timeFilter === 'ALL'
+                        ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black scale-[1.02]'
+                        : 'bg-white/5 hover:bg-white/10 text-gray-300'
+                    }`}
+                  >
+                    Tout
+                  </button>
+                </SlidingOptionsRow>
               </div>
 
               <div className="text-[11px] text-gray-400 font-mono flex items-center gap-1.5 shrink-0 px-2">
@@ -1100,6 +1247,53 @@ export const DirectorLiveDashboard: React.FC<DirectorLiveDashboardProps> = ({
                   </div>
 
                 </div>
+              </div>
+
+              {/* Director Live Stock Categories Sliding Row */}
+              <div className="w-full pt-1">
+                <SlidingOptionsRow
+                  activeItemId={selectedStockCategory}
+                  scrollStep={220}
+                  showArrows={true}
+                  showGradients={true}
+                  className="gap-1.5 py-0.5 text-xs"
+                >
+                  <button
+                    type="button"
+                    id="director-stock-cat-all"
+                    data-id="ALL"
+                    data-active={selectedStockCategory === 'ALL'}
+                    onClick={() => setSelectedStockCategory('ALL')}
+                    className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
+                      selectedStockCategory === 'ALL'
+                        ? 'bg-purple-600 text-white shadow-md scale-[1.02]'
+                        : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-white/5'
+                    }`}
+                  >
+                    Toutes les catégories ({products.length})
+                  </button>
+                  {(categories || PRODUCT_CATEGORIES).map(c => {
+                    const isSel = selectedStockCategory === c.id;
+                    const count = products.filter(p => p.category === c.id).length;
+                    return (
+                      <button
+                        key={c.id}
+                        id={`director-stock-cat-${c.id}`}
+                        data-id={c.id}
+                        data-active={isSel}
+                        onClick={() => setSelectedStockCategory(c.id)}
+                        className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                          isSel
+                            ? 'bg-purple-600 text-white shadow-md scale-[1.02]'
+                            : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-white/5'
+                        }`}
+                      >
+                        <span>{c.name}</span>
+                        <span className="text-[10px] opacity-75 font-mono">({count})</span>
+                      </button>
+                    );
+                  })}
+                </SlidingOptionsRow>
               </div>
 
               {/* Table */}

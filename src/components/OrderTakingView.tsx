@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { 
   Search, Plus, Minus, Trash2, Send, Wine, 
   Sparkles, Check, ArrowLeft, AlertTriangle, 
-  Flame, GlassWater, Zap, Beer, PackageCheck
+  Flame, GlassWater, Zap, Beer, PackageCheck,
+  Cigarette
 } from 'lucide-react';
 import { usePOS } from '../context/POSContext';
 import { ProductCategory, Product, Table } from '../types';
 import { formatFCFA } from '../utils/formatters';
 import { triggerOrderValidatedHaptic, triggerSelectionHaptic, triggerActionHaptic } from '../utils/capacitorBridge';
+import { SlidingOptionsRow } from './SlidingOptionsRow';
 
 interface OrderTakingViewProps {
   initialTableId: string | null;
@@ -15,14 +17,18 @@ interface OrderTakingViewProps {
 }
 
 const CATEGORY_TABS: Array<{ id: string; label: string; icon: React.ReactNode }> = [
-  { id: 'ALL', label: 'Toutes les Boissons', icon: <Wine className="w-4 h-4" /> },
+  { id: 'ALL', label: 'Tous les Produits', icon: <Wine className="w-4 h-4" /> },
   { id: 'CHAMPAGNE', label: 'Champagnes', icon: <Sparkles className="w-4 h-4 text-amber-400" /> },
+  { id: 'VINS', label: 'Vins', icon: <Wine className="w-4 h-4 text-rose-400" /> },
+  { id: 'VINS_MOUSSEUX', label: 'Vins Mousseux', icon: <Sparkles className="w-4 h-4 text-emerald-300" /> },
   { id: 'SPIRITUEUX', label: 'Spiritueux & Shots', icon: <GlassWater className="w-4 h-4 text-orange-400" /> },
   { id: 'COCKTAILS', label: 'Cocktails Signatures', icon: <Flame className="w-4 h-4 text-pink-400" /> },
   { id: 'BIERES', label: 'Bières & Cidres', icon: <Beer className="w-4 h-4 text-yellow-400" /> },
   { id: 'SOFTS_ENERGY', label: 'Softs & Red Bull', icon: <Zap className="w-4 h-4 text-cyan-400" /> },
   { id: 'PACKS_VIP', label: 'Packs Show VIP', icon: <Sparkles className="w-4 h-4 text-purple-400" /> },
   { id: 'CHICHAS', label: 'Chichas Lounge', icon: <Flame className="w-4 h-4 text-emerald-400" /> },
+  { id: 'CIGARES_GRAND', label: 'Cigares Grand', icon: <Cigarette className="w-4 h-4 text-amber-500" /> },
+  { id: 'CIGARES_PETIT', label: 'Cigares Petit', icon: <Cigarette className="w-4 h-4 text-yellow-500" /> },
 ];
 
 const COMMON_MODIFIERS = [
@@ -229,23 +235,33 @@ export const OrderTakingView: React.FC<OrderTakingViewProps> = ({
               />
             </div>
 
-            {/* Category Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
-              {CATEGORY_TABS.map(tab => (
-                <button
-                  key={tab.id}
-                  id={`cat-tab-${tab.id}`}
-                  onClick={() => setSelectedCategory(tab.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
-                    selectedCategory === tab.id
-                      ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold shadow-md shadow-amber-500/20'
-                      : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  {tab.icon}
-                  <span>{tab.label}</span>
-                </button>
-              ))}
+            {/* Category Sliding Options Row */}
+            <div className="w-full">
+              <SlidingOptionsRow
+                activeItemId={selectedCategory}
+                scrollStep={240}
+                showArrows={true}
+                showGradients={true}
+                className="gap-2 py-0.5"
+              >
+                {CATEGORY_TABS.map(tab => (
+                  <button
+                    key={tab.id}
+                    id={`cat-tab-${tab.id}`}
+                    data-id={tab.id}
+                    data-active={selectedCategory === tab.id}
+                    onClick={() => setSelectedCategory(tab.id)}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+                      selectedCategory === tab.id
+                        ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black font-bold shadow-md shadow-amber-500/20 scale-[1.02]'
+                        : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-white/5'
+                    }`}
+                  >
+                    {tab.icon}
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
+              </SlidingOptionsRow>
             </div>
 
           </div>
@@ -414,16 +430,23 @@ export const OrderTakingView: React.FC<OrderTakingViewProps> = ({
                     </div>
 
                     {activeItemForNotes === item.productId && (
-                      <div className="pt-1 flex flex-wrap gap-1">
-                        {COMMON_MODIFIERS.map(mod => (
-                          <button
-                            key={mod}
-                            onClick={() => handleAddNoteToItem(item.productId, mod)}
-                            className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 hover:bg-amber-500/20 text-gray-300 hover:text-amber-300 border border-white/10 transition-colors cursor-pointer"
-                          >
-                            {mod}
-                          </button>
-                        ))}
+                      <div className="pt-1.5 w-full">
+                        <SlidingOptionsRow
+                          scrollStep={160}
+                          showArrows={true}
+                          showGradients={true}
+                          className="gap-1 py-0.5"
+                        >
+                          {COMMON_MODIFIERS.map(mod => (
+                            <button
+                              key={mod}
+                              onClick={() => handleAddNoteToItem(item.productId, mod)}
+                              className="text-[10px] px-2 py-0.5 rounded bg-white/5 hover:bg-amber-500/20 text-gray-300 hover:text-amber-300 border border-white/10 transition-colors cursor-pointer shrink-0 whitespace-nowrap"
+                            >
+                              {mod}
+                            </button>
+                          ))}
+                        </SlidingOptionsRow>
                       </div>
                     )}
 

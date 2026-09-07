@@ -20,6 +20,7 @@ import { ThermalReceiptModal } from './components/ThermalReceiptModal';
 import { ArchitectureModal } from './components/ArchitectureModal';
 import { StartupProfileModal } from './components/StartupProfileModal';
 import { CompanyProfileModal } from './components/CompanyProfileModal';
+import { CompanyHeaderBanner } from './components/CompanyHeaderBanner';
 import { PrinterSettingsModal } from './components/PrinterSettingsModal';
 import { OfflineStatusBar } from './components/OfflineStatusBar';
 import { OfflineManagerModal } from './components/OfflineManagerModal';
@@ -31,10 +32,12 @@ import { EnterpriseManagementModal } from './components/EnterpriseManagementModa
 import { LocalDiskBackupModal } from './components/LocalDiskBackupModal';
 import { Payment } from './types';
 import { initCapacitorApp } from './utils/capacitorBridge';
+import { formatFCFA } from './utils/formatters';
 import { 
   Users, Coffee, Package, BarChart3, Plus, 
   Wine, Sparkles, Smartphone, ShieldCheck, UserPlus,
-  Building2, Bluetooth, AlertCircle, Receipt, Radio
+  Building2, Bluetooth, AlertCircle, Receipt, Radio,
+  CheckCircle2, X
 } from 'lucide-react';
 
 function POSAppContent() {
@@ -58,7 +61,9 @@ function POSAppContent() {
     showEnterpriseModal,
     setShowEnterpriseModal,
     showDiskBackupModal,
-    setShowDiskBackupModal
+    setShowDiskBackupModal,
+    autoRestoredNotice,
+    dismissAutoRestoredNotice
   } = usePOS();
   
   const [currentTab, setCurrentTab] = useState<AppTabType>(() => {
@@ -135,7 +140,14 @@ function POSAppContent() {
   return (
     <div className="min-h-screen bg-[#090b12] text-gray-100 flex flex-col font-sans selection:bg-amber-500 selection:text-black">
       
-      {/* Top Main Navigation */}
+      {/* 1. Informations de l'Entreprise EN TÊTE DE PAGE (Top Company Header Banner) */}
+      <CompanyHeaderBanner
+        onOpenCompanyProfile={() => setShowCompanyProfileModal(true)}
+        onOpenShareDirector={() => setIsShareDirectorModalOpen(true)}
+        onNavigateToDirectorLive={() => setCurrentTab('DIRECTOR_LIVE')}
+      />
+
+      {/* 2. Navigation et reste de l'application AU-DESSOUS (Navbar & Controls) */}
       <Navbar
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
@@ -150,6 +162,42 @@ function POSAppContent() {
 
       {/* Offline Alert & Status Banner */}
       <OfflineStatusBar onOpenOfflineModal={handleOpenOfflineModalWithTab} />
+
+      {/* Auto-Restored Latest Backup Banner upon Application Reopening */}
+      {autoRestoredNotice && (
+        <div 
+          id="banner-auto-restored-notice"
+          className="bg-gradient-to-r from-emerald-950/80 via-[#0a201b] to-cyan-950/70 border-b border-emerald-500/40 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs text-emerald-200 shadow-md"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+            <span>
+              <strong>Dernier fichier .JSON restauré à l'ouverture :</strong>{' '}
+              <span className="font-mono text-emerald-300 font-semibold">{autoRestoredNotice.fileName}</span>{' '}
+              ({autoRestoredNotice.ordersCount} commande(s), {autoRestoredNotice.paymentsCount} encaissement(s) • Total : {formatFCFA(autoRestoredNotice.totalRevenueFCFA)})
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              id="btn-notice-open-disk-backup-modal"
+              onClick={() => setShowDiskBackupModal(true)}
+              className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-semibold text-[11px] transition-colors cursor-pointer border border-emerald-500/30"
+            >
+              Gérer les sauvegardes
+            </button>
+            <button
+              id="btn-dismiss-auto-restored-notice"
+              onClick={dismissAutoRestoredNotice}
+              className="p-1 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
+              title="Fermer la notification"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* First-time setup helper banner if not configured yet */}
       {!companyProfile.isConfigured && (

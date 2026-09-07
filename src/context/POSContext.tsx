@@ -17,7 +17,7 @@ import {
   INITIAL_USERS, INITIAL_TABLES, INITIAL_PRODUCTS, 
   INITIAL_PRINTER_CONFIG, INITIAL_PAYMENTS, INITIAL_DAILY_BACKUPS,
   INITIAL_COMPANY_PROFILE, INITIAL_STARTUP_OPTIONS, ZONE_LABELS,
-  PRODUCT_CATEGORIES, createStarterDatasetForTemplate
+  PRODUCT_CATEGORIES, CATEGORY_LABELS_MAP, createStarterDatasetForTemplate
 } from '../data/initialData';
 import { soundManager, formatDateTime, formatFullDateTime, formatDateShort, formatFCFA } from '../utils/formatters';
 import { sendBluetoothTestPrint, searchAndPairBluetoothDevice, isWebBluetoothSupported } from '../utils/escpos';
@@ -101,6 +101,7 @@ interface POSContextType {
   clearSyncedLogs: () => void;
   clearAllLogs: () => void;
   exportSyncLogsJSON: () => void;
+  syncAllDataToCloud: () => Promise<{ success: boolean; syncedCount: number; error?: string }>;
   
   // Actions
   setCurrentUser: (user: User) => void;
@@ -371,7 +372,20 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const [products, setProducts] = useState<Product[]>(() => {
     const saved = localStorage.getItem(getScopedKey(STORAGE_KEYS.PRODUCTS, getInitialEnterpriseId()));
-    return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
+    if (!saved) return INITIAL_PRODUCTS;
+    try {
+      const parsed: Product[] = JSON.parse(saved);
+      const existingIds = new Set(parsed.map(p => p.id));
+      const missingInitial = INITIAL_PRODUCTS.filter(p => !existingIds.has(p.id));
+      if (missingInitial.length > 0) {
+        const merged = [...parsed, ...missingInitial];
+        localStorage.setItem(getScopedKey(STORAGE_KEYS.PRODUCTS, getInitialEnterpriseId()), JSON.stringify(merged));
+        return merged;
+      }
+      return parsed;
+    } catch {
+      return INITIAL_PRODUCTS;
+    }
   });
 
   const [orders, setOrders] = useState<Order[]>(() => {
@@ -844,6 +858,7 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     setUsers(prev => [newUser, ...prev]);
     setCurrentUser(newUser);
+    firestoreSync.saveUser(newUser);
     soundManager.playSuccessTone();
     return newUser;
   };
@@ -853,6 +868,7 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (currentUser.id === updatedUser.id) {
       setCurrentUser(updatedUser);
     }
+    firestoreSync.saveUser(updatedUser);
   };
 
   const deleteUser = (userId: string) => {
@@ -878,6 +894,7 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
     setProducts(prev => [newProduct, ...prev]);
 
+    let initialMovement: StockMovement | null = null;
     if (newProduct.currentStock > 0) {
       const movement: StockMovement = {
         id: 'mov_' + Math.random().toString(36).substr(2, 9),
@@ -890,7 +907,14 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         timestamp: new Date().toISOString(),
         authorName: currentUser.name
       };
+      initialMovement = movement;
       setStockMovements(prev => [movement, ...prev]);
+    }
+
+    // Sync to Cloud Firestore for Director live tracking
+    firestoreSync.saveProduct(newProduct);
+    if (initialMovement) {
+      firestoreSync.saveStockMovement(initialMovement);
     }
 
     soundManager.playSuccessTone();
@@ -899,11 +923,13 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateProduct = (updatedProduct: Product) => {
     setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+    firestoreSync.saveProduct(updatedProduct);
     soundManager.playSuccessTone();
   };
 
   const deleteProduct = (productId: string) => {
     setProducts(prev => prev.filter(p => p.id !== productId));
+    firestoreSync.deleteProduct(productId);
     soundManager.playSuccessTone();
   };
 
@@ -916,12 +942,14 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       totalAmountFCFA: 0
     };
     setTables(prev => [...prev, newTable]);
+    firestoreSync.saveTable(newTable);
     soundManager.playSuccessTone();
     return newTable;
   };
 
   const updateTable = (updatedTable: Table) => {
     setTables(prev => prev.map(t => t.id === updatedTable.id ? updatedTable : t));
+    firestoreSync.saveTable(updatedTable);
     soundManager.playSuccessTone();
   };
 
@@ -937,6 +965,7 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (activeTableId === tableId) {
       setActiveTableId(null);
     }
+    firestoreSync.deleteTable(tableId);
     soundManager.playSuccessTone();
     return { success: true };
   };
@@ -1025,6 +1054,9 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Internal helper to deduct stock
   const deductStockForProduct = (productId: string, quantity: number, orderId: string, tableName: string) => {
+    let createdMovement: StockMovement | null = null;
+    let updatedProductToSync: Product | null = null;
+
     setProducts(prevProducts => {
       return prevProducts.map(prod => {
         if (prod.id === productId) {
@@ -1043,12 +1075,21 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             authorName: currentUser.name
           };
 
+          createdMovement = movement;
           setStockMovements(prevMoves => [movement, ...prevMoves]);
-          return { ...prod, currentStock: newStock };
+          updatedProductToSync = { ...prod, currentStock: newStock };
+          return updatedProductToSync;
         }
         return prod;
       });
     });
+
+    if (createdMovement) {
+      firestoreSync.saveStockMovement(createdMovement);
+    }
+    if (updatedProductToSync) {
+      firestoreSync.saveProduct(updatedProductToSync);
+    }
   };
 
   // Order Creation / Append
@@ -1681,7 +1722,7 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const existing = catMap.get(item.category) || {
           totalFCFA: 0,
           quantitySold: 0,
-          categoryLabel: item.category.replace('_', ' ')
+          categoryLabel: CATEGORY_LABELS_MAP[item.category] || item.category.replace('_', ' ')
         };
         existing.totalFCFA += item.totalPriceFCFA;
         existing.quantitySold += item.quantity;
@@ -1824,7 +1865,7 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const existing = catMap.get(item.category) || {
           totalFCFA: 0,
           quantitySold: 0,
-          categoryLabel: item.category.replace('_', ' ')
+          categoryLabel: CATEGORY_LABELS_MAP[item.category] || item.category.replace('_', ' ')
         };
         existing.totalFCFA += item.totalPriceFCFA;
         existing.quantitySold += item.quantity;
@@ -1965,13 +2006,29 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const updateCompanyProfile = (updatedFields: Partial<CompanyProfile>) => {
-    setCompanyProfile(prev => ({
-      ...prev,
-      ...updatedFields,
-      isConfigured: true,
-      configuredAt: new Date().toISOString()
-    }));
+    setCompanyProfile(prev => {
+      const updated = {
+        ...prev,
+        ...updatedFields,
+        isConfigured: true,
+        configuredAt: new Date().toISOString()
+      };
+      firestoreSync.saveCompanyProfile(updated);
+      return updated;
+    });
     soundManager.playSuccessTone();
+  };
+
+  const syncAllDataToCloud = async (): Promise<{ success: boolean; syncedCount: number; error?: string }> => {
+    return await firestoreSync.syncAllDataToCloud({
+      profile: companyProfile,
+      products,
+      tables,
+      orders,
+      payments,
+      movements: stockMovements,
+      users
+    });
   };
 
   const updateScanOptions = (newOptions: Partial<BluetoothScanOptions>) => {
@@ -3451,7 +3508,8 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     retrySingleSyncLog,
     clearSyncedLogs,
     clearAllLogs,
-    exportSyncLogsJSON
+    exportSyncLogsJSON,
+    syncAllDataToCloud
   }), [
     activeEnterpriseId, enterprisesList, showEnterpriseModal,
     currentUser, users, tables, products, orders, payments, stockMovements,
@@ -3460,7 +3518,7 @@ export const POSProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     deviceSignature, deviceChangeAlert, isNewDeviceModalOpen, showDeviceStationModal, knownDevicesList,
     syncLogs, pendingSyncCount, pendingSyncAmountFCFA, isSyncingQueue,
     diskBackupConfig, diskBackupFiles, isDiskBackupRunning, showDiskBackupModal,
-    autoRestoredNotice
+    autoRestoredNotice, syncAllDataToCloud
   ]);
 
   return (

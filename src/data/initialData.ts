@@ -497,6 +497,200 @@ export const INITIAL_PRODUCTS: Product[] = [
     currentStock: 0,
     minStockThreshold: 10,
     isAlcoholic: false
+  },
+
+  // Vins
+  {
+    id: 'p_mouton_cadet',
+    name: 'Mouton Cadet Baron Philippe Bordeaux 75cl',
+    category: 'VINS',
+    categoryName: 'Vins',
+    priceFCFA: 25000,
+    costPriceFCFA: 14000,
+    format: 'BOUTEILLE',
+    volumeCl: 75,
+    currentStock: 0,
+    minStockThreshold: 6,
+    isAlcoholic: true,
+    badge: 'Bordeaux Rouge',
+    description: 'Vin rouge classique de Bordeaux, tanins soyeux et notes de fruits rouges'
+  },
+  {
+    id: 'p_chablis_fevre',
+    name: 'Chablis Domaine William Fèvre 75cl',
+    category: 'VINS',
+    categoryName: 'Vins',
+    priceFCFA: 45000,
+    costPriceFCFA: 26000,
+    format: 'BOUTEILLE',
+    volumeCl: 75,
+    currentStock: 0,
+    minStockThreshold: 4,
+    isAlcoholic: true,
+    badge: 'Bourgogne Blanc',
+    description: 'Grand vin blanc minéral et vif, fraîcheur iodée'
+  },
+  {
+    id: 'p_verre_vin_rouge',
+    name: 'Verre de Vin Rouge Sélection Cave',
+    category: 'VINS',
+    categoryName: 'Vins',
+    priceFCFA: 5000,
+    costPriceFCFA: 2000,
+    format: 'VERRE_DOSE',
+    volumeCl: 15,
+    currentStock: 0,
+    minStockThreshold: 10,
+    isAlcoholic: true,
+    description: 'Service au verre 15cl sélection sommelier'
+  },
+  {
+    id: 'p_verre_vin_blanc',
+    name: 'Verre de Vin Blanc Sec Frais',
+    category: 'VINS',
+    categoryName: 'Vins',
+    priceFCFA: 5000,
+    costPriceFCFA: 2000,
+    format: 'VERRE_DOSE',
+    volumeCl: 15,
+    currentStock: 0,
+    minStockThreshold: 10,
+    isAlcoholic: true,
+    description: 'Service au verre 15cl servi bien frais'
+  },
+
+  // Vins Mousseux
+  {
+    id: 'p_prosecco_doc',
+    name: 'Prosecco DOC Treviso Brut Spumante 75cl',
+    category: 'VINS_MOUSSEUX',
+    categoryName: 'Vins Mousseux',
+    priceFCFA: 30000,
+    costPriceFCFA: 16000,
+    format: 'BOUTEILLE',
+    volumeCl: 75,
+    currentStock: 0,
+    minStockThreshold: 6,
+    isAlcoholic: true,
+    badge: 'Italie Spumante',
+    description: 'Vin pétillant italien fin et aromatique, bulles légères et festives'
+  },
+  {
+    id: 'p_cava_freixenet',
+    name: 'Cava Brut Reserva Freixenet Cordon Negro 75cl',
+    category: 'VINS_MOUSSEUX',
+    categoryName: 'Vins Mousseux',
+    priceFCFA: 25000,
+    costPriceFCFA: 13000,
+    format: 'BOUTEILLE',
+    volumeCl: 75,
+    currentStock: 0,
+    minStockThreshold: 6,
+    isAlcoholic: true,
+    badge: 'Cava Espagne',
+    description: 'Cava catalan méthode traditionnelle, arômes frais de pomme et d’agrumes'
+  },
+  {
+    id: 'p_coupe_prosecco',
+    name: 'Coupe de Prosecco Spumante 12cl',
+    category: 'VINS_MOUSSEUX',
+    categoryName: 'Vins Mousseux',
+    priceFCFA: 5000,
+    costPriceFCFA: 2200,
+    format: 'VERRE_DOSE',
+    volumeCl: 12,
+    currentStock: 0,
+    minStockThreshold: 10,
+    isAlcoholic: true,
+    description: 'Coupe de vin mousseux servi à la flûte'
+  },
+
+  // Cigares Grand
+  {
+    id: 'p_cohiba_siglo_vi',
+    name: 'Cigare Cohiba Siglo VI (Grand Robusto)',
+    category: 'CIGARES_GRAND',
+    categoryName: 'Cigares Grand',
+    priceFCFA: 50000,
+    costPriceFCFA: 32000,
+    format: 'UNITE',
+    currentStock: 0,
+    minStockThreshold: 5,
+    isAlcoholic: false,
+    badge: 'Habano Prestige',
+    description: 'Grand format d’exception de La Havane, calibre 52, tirage irréprochable'
+  },
+  {
+    id: 'p_montecristo_no2',
+    name: 'Cigare Montecristo No. 2 (Torpedo Pyramide)',
+    category: 'CIGARES_GRAND',
+    categoryName: 'Cigares Grand',
+    priceFCFA: 40000,
+    costPriceFCFA: 25000,
+    format: 'UNITE',
+    currentStock: 0,
+    minStockThreshold: 5,
+    isAlcoholic: false,
+    badge: 'Classique Cubain',
+    description: 'Cigare mythique en forme d’obus, arômes puissants de cacao et de cèdre'
+  },
+  {
+    id: 'p_romeo_churchill',
+    name: 'Cigare Romeo y Julieta Churchill Grand',
+    category: 'CIGARES_GRAND',
+    categoryName: 'Cigares Grand',
+    priceFCFA: 38000,
+    costPriceFCFA: 24000,
+    format: 'UNITE',
+    currentStock: 0,
+    minStockThreshold: 5,
+    isAlcoholic: false,
+    badge: 'Grand Format',
+    description: 'Module Churchill long format 178mm, fumée douce et boisée'
+  },
+
+  // Cigares Petit
+  {
+    id: 'p_cohiba_panetela',
+    name: 'Cigare Cohiba Panetelas (Petit Format)',
+    category: 'CIGARES_PETIT',
+    categoryName: 'Cigares Petit',
+    priceFCFA: 20000,
+    costPriceFCFA: 12000,
+    format: 'UNITE',
+    currentStock: 0,
+    minStockThreshold: 5,
+    isAlcoholic: false,
+    badge: 'Petit Format',
+    description: 'Élégant petit format fin de Cuba, combustion rapide et arômes boisés'
+  },
+  {
+    id: 'p_montecristo_no5',
+    name: 'Cigare Montecristo No. 5 (Petit Corona)',
+    category: 'CIGARES_PETIT',
+    categoryName: 'Cigares Petit',
+    priceFCFA: 16000,
+    costPriceFCFA: 9500,
+    format: 'UNITE',
+    currentStock: 0,
+    minStockThreshold: 5,
+    isAlcoholic: false,
+    badge: 'Petit Corona',
+    description: 'Dégustation courte de 25-30 minutes, parfait avec un café ou digestif'
+  },
+  {
+    id: 'p_cohiba_club_10',
+    name: 'Boîte Cigarillos Cohiba Club (Paquet de 10)',
+    category: 'CIGARES_PETIT',
+    categoryName: 'Cigares Petit',
+    priceFCFA: 25000,
+    costPriceFCFA: 15000,
+    format: 'PACK',
+    currentStock: 0,
+    minStockThreshold: 5,
+    isAlcoholic: false,
+    badge: 'Pack 10 Unités',
+    description: 'Étui de 10 mini-cigarillos cubains 100% tabac de Vuelta Abajo'
   }
 ];
 
@@ -614,13 +808,31 @@ import { Payment, DailyBackupSnapshot } from '../types';
 
 export const PRODUCT_CATEGORIES: Array<{ id: string; name: string }> = [
   { id: 'CHAMPAGNE', name: 'Champagnes' },
+  { id: 'VINS', name: 'Vins' },
+  { id: 'VINS_MOUSSEUX', name: 'Vins Mousseux' },
   { id: 'SPIRITUEUX', name: 'Spiritueux & Whiskies' },
   { id: 'COCKTAILS', name: 'Cocktails Signature' },
   { id: 'BIERES', name: 'Bières & Cidres' },
   { id: 'SOFTS_ENERGY', name: 'Softs & Energy Drinks' },
   { id: 'PACKS_VIP', name: 'Packs & Bouteilles VIP' },
   { id: 'CHICHAS', name: 'Chichas & Accessoires' },
+  { id: 'CIGARES_GRAND', name: 'Cigares Grand Format' },
+  { id: 'CIGARES_PETIT', name: 'Cigares Petit Format' },
 ];
+
+export const CATEGORY_LABELS_MAP: Record<string, string> = {
+  CHAMPAGNE: 'Champagnes',
+  VINS: 'Vins',
+  VINS_MOUSSEUX: 'Vins Mousseux',
+  SPIRITUEUX: 'Spiritueux & Whiskies',
+  COCKTAILS: 'Cocktails Signature',
+  BIERES: 'Bières & Cidres',
+  SOFTS_ENERGY: 'Softs & Energy Drinks',
+  PACKS_VIP: 'Packs & Bouteilles VIP',
+  CHICHAS: 'Chichas & Accessoires',
+  CIGARES_GRAND: 'Cigares Grand Format',
+  CIGARES_PETIT: 'Cigares Petit Format',
+};
 
 export const INITIAL_PAYMENTS: Payment[] = [];
 

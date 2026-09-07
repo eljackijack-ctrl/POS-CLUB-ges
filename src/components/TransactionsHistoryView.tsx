@@ -16,6 +16,7 @@ import { exportReceiptPDF } from '../utils/pdfGenerator';
 import { ZONE_LABELS } from '../data/initialData';
 import { ThermalReceiptModal } from './ThermalReceiptModal';
 import { ResetSalesHistoryModal } from './ResetSalesHistoryModal';
+import { SlidingOptionsRow } from './SlidingOptionsRow';
 
 type DateFilterType = 'ALL' | 'TODAY' | 'YESTERDAY' | 'LAST_7_DAYS' | 'THIS_MONTH' | 'LAST_MONTH' | 'CUSTOM';
 type SortOrderType = 'DATE_DESC' | 'DATE_ASC' | 'AMOUNT_DESC' | 'AMOUNT_ASC';
@@ -702,43 +703,60 @@ export const TransactionsHistoryView: React.FC = () => {
 
         </div>
 
-        {/* TAB NAVIGATION SWITCHER: Tickets vs Daily vs Monthly */}
-        <div className="flex items-center gap-2 mt-6 pt-4 border-t border-white/10 overflow-x-auto">
-          <button
-            onClick={() => setActiveTab('TICKETS')}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
-              activeTab === 'TICKETS'
-                ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
-                : 'bg-[#181c2f] text-gray-300 hover:bg-white/10 border border-white/5'
-            }`}
+        {/* TAB NAVIGATION SWITCHER: Sliding Options Row */}
+        <div className="w-full mt-6 pt-4 border-t border-white/10">
+          <SlidingOptionsRow
+            activeItemId={activeTab}
+            scrollStep={240}
+            showArrows={true}
+            showGradients={true}
+            className="gap-2 py-0.5"
           >
-            <History className="w-4 h-4" />
-            <span>1. Factures Détaillées ({filteredPayments.length})</span>
-          </button>
+            <button
+              id="history-tab-tickets"
+              data-id="TICKETS"
+              data-active={activeTab === 'TICKETS'}
+              onClick={() => setActiveTab('TICKETS')}
+              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0 ${
+                activeTab === 'TICKETS'
+                  ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20 scale-[1.02]'
+                  : 'bg-[#181c2f] text-gray-300 hover:bg-white/10 border border-white/5'
+              }`}
+            >
+              <History className="w-4 h-4" />
+              <span>1. Factures Détaillées ({filteredPayments.length})</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('DAILY')}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
-              activeTab === 'DAILY'
-                ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
-                : 'bg-[#181c2f] text-gray-300 hover:bg-white/10 border border-white/5'
-            }`}
-          >
-            <Calendar className="w-4 h-4 text-amber-400" />
-            <span>2. Synthèse Ventes Journalières ({dailyBreakdown.length} jours)</span>
-          </button>
+            <button
+              id="history-tab-daily"
+              data-id="DAILY"
+              data-active={activeTab === 'DAILY'}
+              onClick={() => setActiveTab('DAILY')}
+              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0 ${
+                activeTab === 'DAILY'
+                  ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20 scale-[1.02]'
+                  : 'bg-[#181c2f] text-gray-300 hover:bg-white/10 border border-white/5'
+              }`}
+            >
+              <Calendar className="w-4 h-4 text-amber-400" />
+              <span>2. Synthèse Ventes Journalières ({dailyBreakdown.length} jours)</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('MONTHLY')}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
-              activeTab === 'MONTHLY'
-                ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
-                : 'bg-[#181c2f] text-gray-300 hover:bg-white/10 border border-white/5'
-            }`}
-          >
-            <BarChart3 className="w-4 h-4 text-purple-400" />
-            <span>3. Synthèse Ventes Mensuelles ({monthlyBreakdown.length} mois)</span>
-          </button>
+            <button
+              id="history-tab-monthly"
+              data-id="MONTHLY"
+              data-active={activeTab === 'MONTHLY'}
+              onClick={() => setActiveTab('MONTHLY')}
+              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0 ${
+                activeTab === 'MONTHLY'
+                  ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20 scale-[1.02]'
+                  : 'bg-[#181c2f] text-gray-300 hover:bg-white/10 border border-white/5'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4 text-purple-400" />
+              <span>3. Synthèse Ventes Mensuelles ({monthlyBreakdown.length} mois)</span>
+            </button>
+          </SlidingOptionsRow>
         </div>
 
       </div>
@@ -800,80 +818,103 @@ export const TransactionsHistoryView: React.FC = () => {
                 )}
               </div>
 
-              {/* Quick Date Selector Buttons */}
-              <div className="md:col-span-6 flex flex-wrap items-center gap-1.5 overflow-x-auto">
-                <button
-                  onClick={() => setDateFilter('ALL')}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                    dateFilter === 'ALL'
-                      ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20'
-                      : 'bg-[#181c2f] text-gray-300 hover:bg-white/5 border border-white/5'
-                  }`}
+              {/* Quick Date Selector Buttons: Sliding Options Row */}
+              <div className="md:col-span-6 min-w-0 max-w-full">
+                <SlidingOptionsRow
+                  activeItemId={dateFilter}
+                  scrollStep={220}
+                  showArrows={true}
+                  showGradients={true}
+                  className="gap-1.5 py-0.5"
                 >
-                  Toutes dates
-                </button>
-
-                <button
-                  onClick={() => setDateFilter('TODAY')}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 ${
-                    dateFilter === 'TODAY'
-                      ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20'
-                      : 'bg-[#181c2f] text-gray-300 hover:bg-white/5 border border-white/5'
-                  }`}
-                >
-                  <Calendar className="w-3 h-3" />
-                  <span>Aujourd'hui</span>
-                  <span className="text-[10px] opacity-80">({formatFCFA(todaySalesStats.total)})</span>
-                </button>
-
-                <button
-                  onClick={() => setDateFilter('YESTERDAY')}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                    dateFilter === 'YESTERDAY'
-                      ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20'
-                      : 'bg-[#181c2f] text-gray-300 hover:bg-white/5 border border-white/5'
-                  }`}
-                >
-                  Hier
-                </button>
-
-                <button
-                  onClick={() => setDateFilter('LAST_7_DAYS')}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                    dateFilter === 'LAST_7_DAYS'
-                      ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20'
-                      : 'bg-[#181c2f] text-gray-300 hover:bg-white/5 border border-white/5'
-                  }`}
-                >
-                  7 jours
-                </button>
-
-                <button
-                  onClick={() => setDateFilter('THIS_MONTH')}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 ${
-                    dateFilter === 'THIS_MONTH'
-                      ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20'
-                      : 'bg-[#181c2f] text-gray-300 hover:bg-white/5 border border-white/5'
-                  }`}
-                >
-                  <BarChart3 className="w-3 h-3" />
-                  <span>Ce mois</span>
-                  <span className="text-[10px] opacity-80">({formatFCFA(currentMonthSalesStats.total)})</span>
-                </button>
-
-                <div className="flex items-center gap-1">
-                  <input
-                    type="date"
-                    value={customDate}
-                    onChange={(e) => {
-                      setCustomDate(e.target.value);
-                      setDateFilter('CUSTOM');
-                    }}
-                    className={`px-2.5 py-1.5 rounded-xl text-xs font-bold bg-[#181c2f] border text-white transition-colors cursor-pointer ${
-                      dateFilter === 'CUSTOM' ? 'border-amber-500 text-amber-300' : 'border-white/10'
+                  <button
+                    id="datefilter-all"
+                    data-id="ALL"
+                    data-active={dateFilter === 'ALL'}
+                    onClick={() => setDateFilter('ALL')}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                      dateFilter === 'ALL'
+                        ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20 scale-[1.02]'
+                        : 'bg-[#181c2f] text-gray-300 hover:bg-white/5 border border-white/5'
                     }`}
-                  />
-                </div>
+                  >
+                    Toutes dates
+                  </button>
+
+                  <button
+                    id="datefilter-today"
+                    data-id="TODAY"
+                    data-active={dateFilter === 'TODAY'}
+                    onClick={() => setDateFilter('TODAY')}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 shrink-0 ${
+                      dateFilter === 'TODAY'
+                        ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20 scale-[1.02]'
+                        : 'bg-[#181c2f] text-gray-300 hover:bg-white/5 border border-white/5'
+                    }`}
+                  >
+                    <Calendar className="w-3 h-3" />
+                    <span>Aujourd'hui</span>
+                    <span className="text-[10px] opacity-80">({formatFCFA(todaySalesStats.total)})</span>
+                  </button>
+
+                  <button
+                    id="datefilter-yesterday"
+                    data-id="YESTERDAY"
+                    data-active={dateFilter === 'YESTERDAY'}
+                    onClick={() => setDateFilter('YESTERDAY')}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                      dateFilter === 'YESTERDAY'
+                        ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20 scale-[1.02]'
+                        : 'bg-[#181c2f] text-gray-300 hover:bg-white/5 border border-white/5'
+                    }`}
+                  >
+                    Hier
+                  </button>
+
+                  <button
+                    id="datefilter-last-7-days"
+                    data-id="LAST_7_DAYS"
+                    data-active={dateFilter === 'LAST_7_DAYS'}
+                    onClick={() => setDateFilter('LAST_7_DAYS')}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                      dateFilter === 'LAST_7_DAYS'
+                        ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20 scale-[1.02]'
+                        : 'bg-[#181c2f] text-gray-300 hover:bg-white/5 border border-white/5'
+                    }`}
+                  >
+                    7 jours
+                  </button>
+
+                  <button
+                    id="datefilter-this-month"
+                    data-id="THIS_MONTH"
+                    data-active={dateFilter === 'THIS_MONTH'}
+                    onClick={() => setDateFilter('THIS_MONTH')}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 shrink-0 ${
+                      dateFilter === 'THIS_MONTH'
+                        ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20 scale-[1.02]'
+                        : 'bg-[#181c2f] text-gray-300 hover:bg-white/5 border border-white/5'
+                    }`}
+                  >
+                    <BarChart3 className="w-3 h-3" />
+                    <span>Ce mois</span>
+                    <span className="text-[10px] opacity-80">({formatFCFA(currentMonthSalesStats.total)})</span>
+                  </button>
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    <input
+                      type="date"
+                      value={customDate}
+                      onChange={(e) => {
+                        setCustomDate(e.target.value);
+                        setDateFilter('CUSTOM');
+                      }}
+                      className={`px-2.5 py-1.5 rounded-xl text-xs font-bold bg-[#181c2f] border text-white transition-colors cursor-pointer ${
+                        dateFilter === 'CUSTOM' ? 'border-amber-500 text-amber-300' : 'border-white/10'
+                      }`}
+                    />
+                  </div>
+                </SlidingOptionsRow>
               </div>
 
             </div>

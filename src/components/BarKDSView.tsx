@@ -8,6 +8,7 @@ import {
 import { usePOS } from '../context/POSContext';
 import { Order, OrderItem } from '../types';
 import { formatFCFA, formatDateTime, getElapsedMinutes } from '../utils/formatters';
+import { SlidingOptionsRow } from './SlidingOptionsRow';
 
 export const BarKDSView: React.FC = () => {
   const { 
@@ -66,33 +67,45 @@ export const BarKDSView: React.FC = () => {
           </div>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="flex items-center gap-1.5 bg-[#0b0d14] p-1 rounded-xl border border-white/10">
-          <button
-            id="kds-tab-pending"
-            onClick={() => setActiveFilter('PENDING')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeFilter === 'PENDING'
-                ? 'bg-emerald-500 text-black shadow-md'
-                : 'text-gray-400 hover:text-white'
-            }`}
+        {/* Tab Switcher: Sliding Options Row */}
+        <div className="shrink-0">
+          <SlidingOptionsRow
+            activeItemId={activeFilter}
+            scrollStep={160}
+            showArrows={true}
+            showGradients={false}
+            className="p-1 rounded-xl bg-[#0b0d14] border border-white/10 gap-1.5"
           >
-            <Bell className="w-3.5 h-3.5" />
-            <span>À Préparer ({activeOrders.length})</span>
-          </button>
+            <button
+              id="kds-tab-pending"
+              data-id="PENDING"
+              data-active={activeFilter === 'PENDING'}
+              onClick={() => setActiveFilter('PENDING')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
+                activeFilter === 'PENDING'
+                  ? 'bg-emerald-500 text-black shadow-md'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <Bell className="w-3.5 h-3.5" />
+              <span>À Préparer ({activeOrders.length})</span>
+            </button>
 
-          <button
-            id="kds-tab-history"
-            onClick={() => setActiveFilter('HISTORY')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeFilter === 'HISTORY'
-                ? 'bg-white/20 text-white shadow-md'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <Check className="w-3.5 h-3.5" />
-            <span>Déjà Servis ({servedOrders.length})</span>
-          </button>
+            <button
+              id="kds-tab-history"
+              data-id="HISTORY"
+              data-active={activeFilter === 'HISTORY'}
+              onClick={() => setActiveFilter('HISTORY')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 ${
+                activeFilter === 'HISTORY'
+                  ? 'bg-white/20 text-white shadow-md'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>Déjà Servis ({servedOrders.length})</span>
+            </button>
+          </SlidingOptionsRow>
         </div>
 
       </div>

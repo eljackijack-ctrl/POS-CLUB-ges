@@ -10,15 +10,20 @@ import { usePOS } from '../context/POSContext';
 import { Product, ProductCategory, SaleFormat, StockMovement } from '../types';
 import { formatFCFA, formatDateTime, formatDateShort, formatFullDateTime, soundManager } from '../utils/formatters';
 import { exportInventoryPDF } from '../utils/pdfGenerator';
+import { SlidingOptionsRow } from './SlidingOptionsRow';
 
 const CATEGORY_OPTIONS: Array<{ value: ProductCategory; label: string }> = [
   { value: 'CHAMPAGNE', label: 'Champagne' },
+  { value: 'VINS', label: 'Vins (Rouges, Blancs, Rosés)' },
+  { value: 'VINS_MOUSSEUX', label: 'Vins Mousseux (Prosecco, Cava)' },
   { value: 'SPIRITUEUX', label: 'Spiritueux & Whiskies' },
   { value: 'COCKTAILS', label: 'Cocktails Signature' },
-  { value: 'BIERES', label: 'Bières' },
+  { value: 'BIERES', label: 'Bières & Cidres' },
   { value: 'SOFTS_ENERGY', label: 'Softs & Energy Drinks' },
   { value: 'PACKS_VIP', label: 'Packs VIP Nightclub' },
   { value: 'CHICHAS', label: 'Chichas & Parfums' },
+  { value: 'CIGARES_GRAND', label: 'Cigares (Grand Format)' },
+  { value: 'CIGARES_PETIT', label: 'Cigares (Petit Format)' },
 ];
 
 const FORMAT_OPTIONS: Array<{ value: SaleFormat; label: string }> = [
@@ -565,37 +570,51 @@ export const StockManagementView: React.FC = () => {
 
         </div>
 
-        {/* Category Pills Filter */}
+        {/* Category Sliding Options Row Filter */}
         {activeTab === 'INVENTORY' && (
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin text-xs">
-            <button
-              onClick={() => setSelectedCategory('ALL')}
-              className={`px-3 py-1 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer ${
-                selectedCategory === 'ALL'
-                  ? 'bg-amber-500 text-black shadow-sm'
-                  : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white'
-              }`}
+          <div className="w-full pt-1">
+            <SlidingOptionsRow
+              activeItemId={selectedCategory}
+              scrollStep={240}
+              showArrows={true}
+              showGradients={true}
+              className="gap-2 py-0.5 text-xs"
             >
-              Toutes ({products.length})
-            </button>
-            {CATEGORY_OPTIONS.map(cat => {
-              const count = products.filter(p => p.category === cat.value).length;
-              const isSel = selectedCategory === cat.value;
-              return (
-                <button
-                  key={cat.value}
-                  onClick={() => setSelectedCategory(cat.value)}
-                  className={`px-2.5 py-1 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
-                    isSel
-                      ? 'bg-white text-black shadow-sm'
-                      : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  <span>{cat.label}</span>
-                  <span className="text-[10px] opacity-75 font-mono">({count})</span>
-                </button>
-              );
-            })}
+              <button
+                id="stock-cat-all"
+                data-id="ALL"
+                data-active={selectedCategory === 'ALL'}
+                onClick={() => setSelectedCategory('ALL')}
+                className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
+                  selectedCategory === 'ALL'
+                    ? 'bg-amber-500 text-black shadow-sm scale-[1.02]'
+                    : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-white/5'
+                }`}
+              >
+                Toutes ({products.length})
+              </button>
+              {CATEGORY_OPTIONS.map(cat => {
+                const count = products.filter(p => p.category === cat.value).length;
+                const isSel = selectedCategory === cat.value;
+                return (
+                  <button
+                    key={cat.value}
+                    id={`stock-cat-${cat.value}`}
+                    data-id={cat.value}
+                    data-active={isSel}
+                    onClick={() => setSelectedCategory(cat.value)}
+                    className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                      isSel
+                        ? 'bg-white text-black shadow-sm scale-[1.02]'
+                        : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-white/5'
+                    }`}
+                  >
+                    <span>{cat.label}</span>
+                    <span className="text-[10px] opacity-75 font-mono">({count})</span>
+                  </button>
+                );
+              })}
+            </SlidingOptionsRow>
           </div>
         )}
 

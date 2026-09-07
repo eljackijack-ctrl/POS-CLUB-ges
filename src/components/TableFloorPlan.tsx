@@ -11,6 +11,7 @@ import { ZONE_LABELS } from '../data/initialData';
 import { formatFCFA, formatDateTime } from '../utils/formatters';
 import { SectionClosingModal } from './SectionClosingModal';
 import { BackupManagementModal } from './BackupManagementModal';
+import { SlidingOptionsRow } from './SlidingOptionsRow';
 
 interface TableFloorPlanProps {
   onSelectTableForOrder: (tableId: string) => void;
@@ -407,43 +408,55 @@ export const TableFloorPlan: React.FC<TableFloorPlanProps> = ({
         
         {/* Zone Pills & Search Row */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          {/* Zone Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-thin">
-            <button
-              id="zone-filter-all"
-              onClick={() => setSelectedZone('ALL')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                selectedZone === 'ALL'
-                  ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20'
-                  : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white'
-              }`}
+          {/* Zone Sliding Options Row */}
+          <div className="flex-1 min-w-0 max-w-full">
+            <SlidingOptionsRow
+              activeItemId={selectedZone}
+              scrollStep={220}
+              showArrows={true}
+              showGradients={true}
+              className="gap-2 py-0.5"
             >
-              Toutes les Zones ({tables.length})
-            </button>
+              <button
+                id="zone-filter-all"
+                data-id="ALL"
+                data-active={selectedZone === 'ALL'}
+                onClick={() => setSelectedZone('ALL')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
+                  selectedZone === 'ALL'
+                    ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20 scale-[1.02]'
+                    : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-white/5'
+                }`}
+              >
+                Toutes les Zones ({tables.length})
+              </button>
 
-            {Object.entries(ZONE_LABELS).map(([zoneKey, zoneInfo]) => {
-              const countInZone = tables.filter(t => t.zone === zoneKey).length;
-              const isSelected = selectedZone === zoneKey;
-              return (
-                <button
-                  key={zoneKey}
-                  id={`zone-filter-${zoneKey}`}
-                  onClick={() => setSelectedZone(zoneKey)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
-                    isSelected
-                      ? 'bg-white text-black shadow-md'
-                      : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  <span 
-                    className="w-2 h-2 rounded-full" 
-                    style={{ backgroundColor: zoneInfo.color }} 
-                  />
-                  <span>{zoneInfo.label}</span>
-                  <span className="text-[10px] opacity-75">({countInZone})</span>
-                </button>
-              );
-            })}
+              {Object.entries(ZONE_LABELS).map(([zoneKey, zoneInfo]) => {
+                const countInZone = tables.filter(t => t.zone === zoneKey).length;
+                const isSelected = selectedZone === zoneKey;
+                return (
+                  <button
+                    key={zoneKey}
+                    id={`zone-filter-${zoneKey}`}
+                    data-id={zoneKey}
+                    data-active={isSelected}
+                    onClick={() => setSelectedZone(zoneKey as TableZone)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                      isSelected
+                        ? 'bg-white text-black shadow-md scale-[1.02]'
+                        : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-white/5'
+                    }`}
+                  >
+                    <span 
+                      className="w-2 h-2 rounded-full shrink-0" 
+                      style={{ backgroundColor: zoneInfo.color }} 
+                    />
+                    <span>{zoneInfo.label}</span>
+                    <span className="text-[10px] opacity-75">({countInZone})</span>
+                  </button>
+                );
+              })}
+            </SlidingOptionsRow>
           </div>
 
           {/* Search and Add Table button */}

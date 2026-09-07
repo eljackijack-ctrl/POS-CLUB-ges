@@ -4,11 +4,12 @@ import {
   Volume2, VolumeX, Printer, FileCode, Shield, 
   Sparkles, KeyRound, UserPlus, Building2, Bluetooth,
   Wifi, WifiOff, Download, Settings2, History, Receipt, Database,
-  Puzzle, Globe, Laptop, Radio, Share2, HardDrive
+  Puzzle, Globe, Laptop, Radio, Share2, HardDrive, ShoppingBag
 } from 'lucide-react';
 import { usePOS } from '../context/POSContext';
 import { UserRole } from '../types';
 import { offlineSyncManager, OfflineStatusState } from '../services/offlineSync';
+import { SlidingOptionsRow } from './SlidingOptionsRow';
 
 export type AppTabType = 'TABLES' | 'ORDER' | 'KDS_BAR' | 'STOCK' | 'TRANSACTIONS' | 'REPORTS' | 'ARCHITECTURE' | 'DIRECTOR_LIVE';
 
@@ -123,152 +124,157 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
 
-          {/* Quick Tools & Active Staff Badge */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            
-            {/* Cloud Firestore Database Indicator */}
-            <button
-              id="btn-cloud-db-status"
-              onClick={onOpenOfflineModal}
-              title={
-                cloudSyncStatus === 'CONNECTED'
-                  ? `Base de données Cloud Firestore connectée (${pendingSyncCount} en attente)`
-                  : "Base de données Cloud en cours de synchronisation"
-              }
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold bg-[#161926] border-cyan-500/30 text-cyan-300 hover:border-cyan-400 cursor-pointer transition-all"
+          {/* Quick Tools & Options Sliding Bar (Coulissante & Bien Ordonnée) */}
+          <div className="flex-1 min-w-0 max-w-[calc(100%-200px)] sm:max-w-[calc(100%-300px)] flex justify-end">
+            <SlidingOptionsRow
+              className="gap-1.5 sm:gap-2 justify-end"
+              containerClassName="max-w-full"
+              scrollStep={220}
+              showArrows={true}
+              showGradients={true}
             >
-              <Database className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="hidden lg:inline">Cloud Firestore</span>
-              {pendingSyncCount > 0 ? (
-                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-amber-500 text-black animate-pulse">
-                  {pendingSyncCount}
+              {/* 1. Cloud Firestore Database Indicator */}
+              <button
+                id="btn-cloud-db-status"
+                onClick={onOpenOfflineModal}
+                title={
+                  cloudSyncStatus === 'CONNECTED'
+                    ? `Base de données Cloud Firestore connectée (${pendingSyncCount} en attente)`
+                    : "Base de données Cloud en cours de synchronisation"
+                }
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold bg-[#161926] border-cyan-500/30 text-cyan-300 hover:border-cyan-400 cursor-pointer transition-all shrink-0"
+              >
+                <Database className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="hidden lg:inline">Cloud Firestore</span>
+                {pendingSyncCount > 0 ? (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-amber-500 text-black animate-pulse">
+                    {pendingSyncCount}
+                  </span>
+                ) : (
+                  <span className={`w-2 h-2 rounded-full ${cloudSyncStatus === 'CONNECTED' ? 'bg-cyan-400 shadow-sm shadow-cyan-400 animate-pulse' : 'bg-amber-400'}`} />
+                )}
+              </button>
+
+              {/* 2. 100% Web App & Offline Hub Button */}
+              <button
+                id="btn-open-install-extension-hub"
+                onClick={onOpenOfflineModal}
+                title="Application 100% Web (Zéro APK requis) - Mode Hors-ligne & Accès Universel"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer transition-all bg-gradient-to-r from-emerald-500/15 via-[#161926] to-[#161926] border-emerald-500/40 text-emerald-300 hover:border-emerald-400 hover:bg-emerald-500/20 shadow-sm shrink-0"
+              >
+                <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="hidden md:inline">
+                  App Web
                 </span>
-              ) : (
-                <span className={`w-2 h-2 rounded-full ${cloudSyncStatus === 'CONNECTED' ? 'bg-cyan-400 shadow-sm shadow-cyan-400 animate-pulse' : 'bg-amber-400'}`} />
-              )}
-            </button>
-
-            {/* 100% Web App & Offline Hub Button */}
-            <button
-              id="btn-open-install-extension-hub"
-              onClick={onOpenOfflineModal}
-              title="Application 100% Web (Zéro APK requis) - Mode Hors-ligne & Accès Universel"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer transition-all bg-gradient-to-r from-emerald-500/15 via-[#161926] to-[#161926] border-emerald-500/40 text-emerald-300 hover:border-emerald-400 hover:bg-emerald-500/20 shadow-sm"
-            >
-              <Globe className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="hidden md:inline">
-                App Web
-              </span>
-              <span className="text-[10px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                100% Web
-              </span>
-              {offlineState.isOnline ? (
-                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400" title="En ligne & Cache prêt" />
-              ) : (
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" title="100% Hors-ligne" />
-              )}
-            </button>
-
-            {/* Device Station & MAC/IP Identification Quick Button */}
-            <button
-              id="btn-device-station-config"
-              onClick={() => setShowDeviceStationModal(true)}
-              title={`Identification Terminal • MAC: ${deviceSignature?.macAddress || 'N/A'} • IP: ${deviceSignature?.ipAddress || 'N/A'}`}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#161926] border border-cyan-500/30 hover:border-cyan-400 text-cyan-300 text-xs font-bold cursor-pointer transition-all shadow-sm"
-            >
-              <Laptop className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="hidden xl:inline font-mono text-[11px]">
-                {deviceSignature?.macAddress ? `${deviceSignature.macAddress.substring(0, 8)}...` : 'Station'}
-              </span>
-              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400" title="Station Active & Identifiée" />
-            </button>
-
-            {/* Multi-Enterprise & Sharing Selector Button */}
-            <button
-              id="btn-enterprise-switcher"
-              onClick={() => setShowEnterpriseModal(true)}
-              title={`Établissement actif : ${companyProfile.name} (Code: ${companyProfile.enterpriseCode || 'CLUBPOS'}) • Cliquez pour partager ou créer un nouvel établissement`}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-purple-900/30 via-[#161926] to-[#161926] border border-purple-500/40 hover:border-purple-400 text-purple-300 text-xs font-bold cursor-pointer transition-all shadow-sm"
-            >
-              <Building2 className="w-3.5 h-3.5 text-purple-400" />
-              <span className="hidden xl:inline truncate max-w-[130px]">
-                {companyProfile.name}
-              </span>
-              <span className="px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-200 font-mono text-[10px] border border-purple-500/30">
-                {companyProfile.enterpriseCode || 'CLUBPOS'}
-              </span>
-            </button>
-
-            {/* Company Profile Quick Button */}
-            <button
-              id="btn-company-profile"
-              onClick={onOpenCompanyProfile}
-              title="Profil & Identité Entreprise (En-tête Facture)"
-              className="p-2 rounded-lg bg-[#161926] border border-amber-500/30 text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 transition-all cursor-pointer flex items-center gap-1 text-xs font-semibold"
-            >
-              <Building2 className="w-4 h-4 text-amber-400" />
-              <span className="hidden xl:inline">Profil Entreprise</span>
-            </button>
-
-            {/* Bluetooth Thermal Printer Status */}
-            <button
-              id="btn-printer-status"
-              onClick={onOpenPrinterSettings}
-              title="Configurer l'imprimante Bluetooth ESC/POS"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#161926] border border-cyan-500/30 hover:border-cyan-400/60 text-gray-200 hover:text-white text-xs font-medium cursor-pointer transition-all"
-            >
-              <Bluetooth className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="hidden sm:inline font-mono">{printerConfig.paperWidth}mm</span>
-              <span className={`w-2 h-2 rounded-full ${printerConfig.isConnected ? 'bg-emerald-400 shadow-sm shadow-emerald-400' : 'bg-rose-400'}`} />
-            </button>
-
-            {/* Local Disk .JSON Backup Folder Button */}
-            <button
-              id="btn-nav-disk-backup"
-              onClick={() => setShowDiskBackupModal(true)}
-              title={`Dossier de Sauvegarde Automatique .JSON • Fréquence: ${diskBackupConfig.intervalMinutes === 1 ? 'Chaque minute (60s)' : `${diskBackupConfig.intervalMinutes} min`} • ${diskBackupFiles.length} fichier(s)`}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#161926] border border-cyan-500/30 hover:border-cyan-400/60 text-cyan-300 hover:text-white text-xs font-semibold cursor-pointer transition-all"
-            >
-              <HardDrive className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="hidden xl:inline">Dossier .JSON</span>
-              {diskBackupConfig.autoBackupEnabled && (
-                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400 animate-pulse" title="Sauvegarde automatique active chaque minute" />
-              )}
-              {diskBackupFiles.length > 0 && (
-                <span className="px-1.5 py-0.2 text-[10px] rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-mono font-bold">
-                  {diskBackupFiles.length}
+                <span className="text-[10px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  100% Web
                 </span>
-              )}
-            </button>
+                {offlineState.isOnline ? (
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400" title="En ligne & Cache prêt" />
+                ) : (
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" title="100% Hors-ligne" />
+                )}
+              </button>
 
-            {/* Sound Toggle */}
-            <button
-              id="btn-toggle-sound"
-              onClick={toggleSound}
-              title={isSoundEnabled ? "Son activé (Bip & Cloche Bar)" : "Son désactivé"}
-              className="p-2 rounded-lg bg-[#161926] border border-white/10 text-gray-300 hover:text-white hover:border-white/20 transition-all cursor-pointer hidden sm:block"
-            >
-              {isSoundEnabled ? <Volume2 className="w-4 h-4 text-emerald-400" /> : <VolumeX className="w-4 h-4 text-gray-500" />}
-            </button>
+              {/* 3. Device Station & MAC/IP Identification Quick Button */}
+              <button
+                id="btn-device-station-config"
+                onClick={() => setShowDeviceStationModal(true)}
+                title={`Identification Terminal • MAC: ${deviceSignature?.macAddress || 'N/A'} • IP: ${deviceSignature?.ipAddress || 'N/A'}`}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#161926] border border-cyan-500/30 hover:border-cyan-400 text-cyan-300 text-xs font-bold cursor-pointer transition-all shadow-sm shrink-0"
+              >
+                <Laptop className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="hidden xl:inline font-mono text-[11px]">
+                  {deviceSignature?.macAddress ? `${deviceSignature.macAddress.substring(0, 8)}...` : 'Station'}
+                </span>
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400" title="Station Active & Identifiée" />
+              </button>
 
-            {/* Share Director Live Link Button */}
-            <button
-              id="btn-nav-share-director"
-              onClick={onOpenShareDirector}
-              title="Partager le lien d'accès en direct pour le Directeur (Smartphone & Web)"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-rose-500/20 to-amber-600/20 hover:from-amber-500/30 hover:to-rose-500/30 border border-amber-500/40 text-amber-300 hover:text-white text-xs font-black cursor-pointer transition-all shadow-sm group"
-            >
-              <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse group-hover:scale-110 transition-transform" />
-              <span className="hidden lg:inline">Suivi Directeur</span>
-              <Share2 className="w-3 h-3 text-amber-400" />
-            </button>
+              {/* 4. Multi-Enterprise & Sharing Selector Button */}
+              <button
+                id="btn-enterprise-switcher"
+                onClick={() => setShowEnterpriseModal(true)}
+                title={`Établissement actif : ${companyProfile.name} (Code: ${companyProfile.enterpriseCode || 'CLUBPOS'}) • Cliquez pour partager ou créer un nouvel établissement`}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-purple-900/30 via-[#161926] to-[#161926] border border-purple-500/40 hover:border-purple-400 text-purple-300 text-xs font-bold cursor-pointer transition-all shadow-sm shrink-0"
+              >
+                <Building2 className="w-3.5 h-3.5 text-purple-400" />
+                <span className="hidden xl:inline truncate max-w-[130px]">
+                  {companyProfile.name}
+                </span>
+                <span className="px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-200 font-mono text-[10px] border border-purple-500/30">
+                  {companyProfile.enterpriseCode || 'CLUBPOS'}
+                </span>
+              </button>
 
-            {/* User Profile / PIN Switcher & Add Profile */}
-            <div className="flex items-center gap-1.5">
+              {/* 5. Company Profile Quick Button */}
+              <button
+                id="btn-company-profile"
+                onClick={onOpenCompanyProfile}
+                title="Profil & Identité Entreprise (En-tête Facture)"
+                className="p-2 rounded-lg bg-[#161926] border border-amber-500/30 text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 transition-all cursor-pointer flex items-center gap-1 text-xs font-semibold shrink-0"
+              >
+                <Building2 className="w-4 h-4 text-amber-400" />
+                <span className="hidden xl:inline">Profil Entreprise</span>
+              </button>
+
+              {/* 6. Bluetooth Thermal Printer Status */}
+              <button
+                id="btn-printer-status"
+                onClick={onOpenPrinterSettings}
+                title="Configurer l'imprimante Bluetooth ESC/POS"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#161926] border border-cyan-500/30 hover:border-cyan-400/60 text-gray-200 hover:text-white text-xs font-medium cursor-pointer transition-all shrink-0"
+              >
+                <Bluetooth className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="hidden sm:inline font-mono">{printerConfig.paperWidth}mm</span>
+                <span className={`w-2 h-2 rounded-full ${printerConfig.isConnected ? 'bg-emerald-400 shadow-sm shadow-emerald-400' : 'bg-rose-400'}`} />
+              </button>
+
+              {/* 7. Local Disk .JSON Backup Folder Button */}
+              <button
+                id="btn-nav-disk-backup"
+                onClick={() => setShowDiskBackupModal(true)}
+                title={`Dossier de Sauvegarde Automatique .JSON • Fréquence: ${diskBackupConfig.intervalMinutes === 1 ? 'Chaque minute (60s)' : `${diskBackupConfig.intervalMinutes} min`} • ${diskBackupFiles.length} fichier(s)`}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#161926] border border-cyan-500/30 hover:border-cyan-400/60 text-cyan-300 hover:text-white text-xs font-semibold cursor-pointer transition-all shrink-0"
+              >
+                <HardDrive className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="hidden xl:inline">Dossier .JSON</span>
+                {diskBackupConfig.autoBackupEnabled && (
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400 animate-pulse" title="Sauvegarde automatique active chaque minute" />
+                )}
+                {diskBackupFiles.length > 0 && (
+                  <span className="px-1.5 py-0.2 text-[10px] rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-mono font-bold">
+                    {diskBackupFiles.length}
+                  </span>
+                )}
+              </button>
+
+              {/* 8. Sound Toggle */}
+              <button
+                id="btn-toggle-sound"
+                onClick={toggleSound}
+                title={isSoundEnabled ? "Son activé (Bip & Cloche Bar)" : "Son désactivé"}
+                className="p-2 rounded-lg bg-[#161926] border border-white/10 text-gray-300 hover:text-white hover:border-white/20 transition-all cursor-pointer hidden sm:block shrink-0"
+              >
+                {isSoundEnabled ? <Volume2 className="w-4 h-4 text-emerald-400" /> : <VolumeX className="w-4 h-4 text-gray-500" />}
+              </button>
+
+              {/* 9. Share Director Live Link Button */}
+              <button
+                id="btn-nav-share-director"
+                onClick={onOpenShareDirector}
+                title="Partager le lien d'accès en direct pour le Directeur (Smartphone & Web)"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-rose-500/20 to-amber-600/20 hover:from-amber-500/30 hover:to-rose-500/30 border border-amber-500/40 text-amber-300 hover:text-white text-xs font-black cursor-pointer transition-all shadow-sm group shrink-0"
+              >
+                <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse group-hover:scale-110 transition-transform" />
+                <span className="hidden lg:inline">Suivi Directeur</span>
+                <Share2 className="w-3 h-3 text-amber-400" />
+              </button>
+
+              {/* 10. User Profile / PIN Switcher */}
               <button
                 id="btn-switch-user-pin"
                 onClick={onOpenAuth}
-                className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-xl bg-[#161926] border border-white/10 hover:border-amber-500/40 transition-all cursor-pointer group"
+                className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-xl bg-[#161926] border border-white/10 hover:border-amber-500/40 transition-all cursor-pointer group shrink-0"
                 title="Changer de session PIN"
               >
                 <div 
@@ -290,132 +296,177 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
               </button>
 
+              {/* 11. Options Démarrage */}
               <button
                 id="btn-open-startup-profiles"
                 onClick={onOpenStartupProfile}
                 title="Régler toutes les options au démarrage & profils staff"
-                className="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold shadow-sm"
+                className="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold shadow-sm shrink-0"
               >
                 <Settings2 className="w-4 h-4 text-amber-400" />
                 <span className="hidden md:inline">Options Démarrage</span>
               </button>
-            </div>
-
+            </SlidingOptionsRow>
           </div>
 
         </div>
       </div>
 
-      {/* Dedicated Navigation Bar: Moved slightly down with enhanced spacing & badges */}
+      {/* Dedicated Navigation Bar: Sliding and well ordered */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2">
-        <nav className="flex items-center justify-between sm:justify-start gap-1 sm:gap-2 bg-[#121524] p-1.5 rounded-2xl border border-white/10 overflow-x-auto scrollbar-thin shadow-inner">
-          <button
-            id="nav-tab-tables"
-            onClick={() => setCurrentTab('TABLES')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
-              currentTab === 'TABLES'
-                ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/30 scale-[1.02]'
-                : 'text-gray-300 hover:text-white hover:bg-white/5'
-            }`}
+        <div className="bg-[#121524] p-1.5 rounded-2xl border border-white/10 shadow-inner">
+          <SlidingOptionsRow
+            activeItemId={currentTab}
+            scrollStep={260}
+            showArrows={true}
+            showGradients={true}
+            className="gap-1.5 sm:gap-2"
           >
-            <Users className="w-4 h-4" />
-            <span>Salle & Tables</span>
-          </button>
+            {/* 1. Salle & Tables */}
+            <button
+              id="nav-tab-tables"
+              data-id="TABLES"
+              data-active={currentTab === 'TABLES'}
+              onClick={() => setCurrentTab('TABLES')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                currentTab === 'TABLES'
+                  ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/30 scale-[1.02]'
+                  : 'text-gray-300 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>Salle & Tables</span>
+            </button>
 
-          <button
-            id="nav-tab-bar"
-            onClick={() => setCurrentTab('KDS_BAR')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all relative cursor-pointer whitespace-nowrap ${
-              currentTab === 'KDS_BAR'
-                ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/30 scale-[1.02]'
-                : 'text-gray-300 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Coffee className="w-4 h-4" />
-            <span>Écran Barman (KDS)</span>
-            {pendingOrdersCount > 0 && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse shadow">
-                {pendingOrdersCount}
+            {/* 2. Prise de Commande */}
+            <button
+              id="nav-tab-order"
+              data-id="ORDER"
+              data-active={currentTab === 'ORDER'}
+              onClick={() => setCurrentTab('ORDER')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                currentTab === 'ORDER'
+                  ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/30 scale-[1.02]'
+                  : 'text-gray-300 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Wine className="w-4 h-4" />
+              <span>Prise de Commande</span>
+            </button>
+
+            {/* 3. Écran Barman (KDS) */}
+            <button
+              id="nav-tab-bar"
+              data-id="KDS_BAR"
+              data-active={currentTab === 'KDS_BAR'}
+              onClick={() => setCurrentTab('KDS_BAR')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all relative cursor-pointer whitespace-nowrap shrink-0 ${
+                currentTab === 'KDS_BAR'
+                  ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/30 scale-[1.02]'
+                  : 'text-gray-300 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Coffee className="w-4 h-4" />
+              <span>Écran Barman (KDS)</span>
+              {pendingOrdersCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse shadow">
+                  {pendingOrdersCount}
+                </span>
+              )}
+            </button>
+
+            {/* 4. Stock & Cave */}
+            <button
+              id="nav-tab-stock"
+              data-id="STOCK"
+              data-active={currentTab === 'STOCK'}
+              onClick={() => setCurrentTab('STOCK')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                currentTab === 'STOCK'
+                  ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30 scale-[1.02]'
+                  : 'text-gray-300 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Package className="w-4 h-4" />
+              <span>Stock & Cave</span>
+              {lowStockCount > 0 && (
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+              )}
+            </button>
+
+            {/* 5. Historique Ventes */}
+            <button
+              id="nav-tab-transactions"
+              data-id="TRANSACTIONS"
+              data-active={currentTab === 'TRANSACTIONS'}
+              onClick={() => setCurrentTab('TRANSACTIONS')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                currentTab === 'TRANSACTIONS'
+                  ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 scale-[1.02]'
+                  : 'text-gray-300 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Receipt className="w-4 h-4 text-indigo-300" />
+              <span>Historique Ventes</span>
+              {payments && payments.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-indigo-950 text-indigo-200 border border-indigo-400/40">
+                  {payments.length}
+                </span>
+              )}
+            </button>
+
+            {/* 6. Rapports & Z */}
+            <button
+              id="nav-tab-reports"
+              data-id="REPORTS"
+              data-active={currentTab === 'REPORTS'}
+              onClick={() => setCurrentTab('REPORTS')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                currentTab === 'REPORTS'
+                  ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30 scale-[1.02]'
+                  : 'text-gray-300 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span>Rapports & Z</span>
+            </button>
+
+            {/* 7. Directeur Live */}
+            <button
+              id="nav-tab-director-live"
+              data-id="DIRECTOR_LIVE"
+              data-active={currentTab === 'DIRECTOR_LIVE'}
+              onClick={() => setCurrentTab('DIRECTOR_LIVE')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                currentTab === 'DIRECTOR_LIVE'
+                  ? 'bg-gradient-to-r from-amber-500 via-rose-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/30 scale-[1.02] font-black'
+                  : 'text-amber-300 hover:text-white hover:bg-amber-500/10 border border-amber-500/30'
+              }`}
+            >
+              <Radio className="w-4 h-4 text-rose-400 animate-pulse" />
+              <span>Directeur Live</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-rose-500 text-white animate-pulse">
+                DIRECT
               </span>
-            )}
-          </button>
+            </button>
 
-          <button
-            id="nav-tab-stock"
-            onClick={() => setCurrentTab('STOCK')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
-              currentTab === 'STOCK'
-                ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30 scale-[1.02]'
-                : 'text-gray-300 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Package className="w-4 h-4" />
-            <span>Stock & Cave</span>
-            {lowStockCount > 0 && (
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-            )}
-          </button>
-
-          <button
-            id="nav-tab-transactions"
-            onClick={() => setCurrentTab('TRANSACTIONS')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
-              currentTab === 'TRANSACTIONS'
-                ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 scale-[1.02]'
-                : 'text-gray-300 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Receipt className="w-4 h-4 text-indigo-300" />
-            <span>Historique Ventes</span>
-            {payments && payments.length > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-indigo-950 text-indigo-200 border border-indigo-400/40">
-                {payments.length}
-              </span>
-            )}
-          </button>
-
-          <button
-            id="nav-tab-reports"
-            onClick={() => setCurrentTab('REPORTS')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
-              currentTab === 'REPORTS'
-                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30 scale-[1.02]'
-                : 'text-gray-300 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <BarChart3 className="w-4 h-4" />
-            <span>Rapports & Z</span>
-          </button>
-
-          <button
-            id="nav-tab-director-live"
-            onClick={() => setCurrentTab('DIRECTOR_LIVE')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
-              currentTab === 'DIRECTOR_LIVE'
-                ? 'bg-gradient-to-r from-amber-500 via-rose-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/30 scale-[1.02] font-black'
-                : 'text-amber-300 hover:text-white hover:bg-amber-500/10 border border-amber-500/30'
-            }`}
-          >
-            <Radio className="w-4 h-4 text-rose-400 animate-pulse" />
-            <span>Directeur Live</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-rose-500 text-white animate-pulse">
-              DIRECT
-            </span>
-          </button>
-
-          <button
-            id="nav-tab-architecture"
-            onClick={() => setCurrentTab('ARCHITECTURE')}
-            className={`hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
-              currentTab === 'ARCHITECTURE'
-                ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/30 scale-[1.02]'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <FileCode className="w-4 h-4" />
-            <span>APK & Docs</span>
-          </button>
-        </nav>
+            {/* 8. APK & Docs */}
+            <button
+              id="nav-tab-architecture"
+              data-id="ARCHITECTURE"
+              data-active={currentTab === 'ARCHITECTURE'}
+              onClick={() => setCurrentTab('ARCHITECTURE')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                currentTab === 'ARCHITECTURE'
+                  ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/30 scale-[1.02]'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <FileCode className="w-4 h-4" />
+              <span>APK & Docs</span>
+            </button>
+          </SlidingOptionsRow>
+        </div>
       </div>
     </header>
   );

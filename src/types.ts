@@ -30,12 +30,16 @@ export interface Table {
 
 export type ProductCategory = 
   | 'CHAMPAGNE' 
+  | 'VINS'
+  | 'VINS_MOUSSEUX'
   | 'SPIRITUEUX' 
   | 'COCKTAILS' 
   | 'BIERES' 
   | 'SOFTS_ENERGY' 
   | 'PACKS_VIP' 
-  | 'CHICHAS';
+  | 'CHICHAS'
+  | 'CIGARES_GRAND'
+  | 'CIGARES_PETIT';
 
 export type SaleFormat = 'BOUTEILLE' | 'VERRE_DOSE' | 'MAGNUM' | 'CANETTE' | 'PACK' | 'UNITE';
 
